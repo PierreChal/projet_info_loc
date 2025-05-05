@@ -218,7 +218,7 @@ class Database:
     # TODO: Ajouter des méthodes de recherche avancée pour chaque entité
 
 
-# Exemple d'utilisation minimale pour l'instant
+# exemple d'utilisation minimale pour l'instant
 if __name__ == "__main__":
     # Création d'une instance de la base de données
     db = Database("test.db")
