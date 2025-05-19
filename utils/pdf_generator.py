@@ -1,18 +1,5 @@
 # utils/pdf_generator.py
-# ce fichier implémente la génération de documents PDF pour les factures du système
-# il fait partie des utilitaires de l'application dans l'architecture MVC
-#
-# structure:
-# - utilise la bibliothèque ReportLab pour créer des documents PDF
-# - définit la classe PDFGenerator avec des méthodes statiques pour la génération
-# - décompose le document en sections logiques (en-tête, détails, tableau, pied de page)
-# - gère la mise en forme avancée avec polices, couleurs et tableaux stylisés
-#
-# interactions:
-# - utilisé par les contrôleurs ou les stratégies de génération de documents
-# - dépend des modèles Facture, Client, Véhicule et Réservation pour les données
-# - crée automatiquement le dossier de destination si nécessaire
-# - produit des fichiers PDF de qualité professionnelle pour les factures clients
+# utilitaires pour la génération de documents pdf
 
 # importation de reportlab pour génération pdf
 from reportlab.pdfgen import canvas
@@ -31,45 +18,76 @@ class PDFGenerator:
     """
 
     @staticmethod
-    def generer_facture(facture, client, vehicule, reservation, chemin_sortie=None):
+    def _generer_en_tete(c, width, height, facture, client):
         """
-        génère facture en pdf
+        génère en-tête du document
 
         args:
-            facture: objet facture à inclure
-            client: objet client concerné
-            vehicule: objet véhicule concerné
-            reservation: objet réservation concerné
-            chemin_sortie: chemin de sauvegarde (optionnel)
-
-        returns:
-            str: chemin du fichier pdf généré
+            c: canvas reportlab
+            width: largeur page
+            height: hauteur page
+            facture: objet facture
+            client: objet client
         """
-        # chemin par défaut si non spécifié
-        if chemin_sortie is None:
-            # création dossier 'factures' si inexistant
-            if not os.path.exists('factures'):
-                os.makedirs('factures')
+        # Ajout du logo - avec une recherche plus robuste du chemin
+        try:
+            # Liste des chemins possibles à essayer pour trouver le logo
+            possible_paths = [
+                os.path.join('utils', 'assets', 'logo.png'),  # Chemin initial
+                os.path.join('..', 'utils', 'assets', 'logo.png'),  # Un niveau au-dessus
+                os.path.abspath(os.path.join('utils', 'assets', 'logo.png')),  # Chemin absolu
+                # Chemin basé sur l'emplacement du script actuel
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), 'assets', 'logo.png'),
+                # Si pdf_generator.py est lui-même dans utils
+                os.path.join(os.path.dirname(os.path.abspath(__file__)), '..', 'utils', 'assets', 'logo.png'),
+            ]
 
-            # nom fichier basé sur id facture et date
-            nom_fichier = f"factures/facture_{facture.id}_{datetime.now().strftime('%Y%m%d')}.pdf"
-        else:
-            nom_fichier = chemin_sortie
+            # Essayer chaque chemin possible
+            logo_path = None
+            for path in possible_paths:
+                if os.path.exists(path):
+                    logo_path = path
+                    print(f"Logo trouvé à: {logo_path}")
+                    break
 
-        # création document pdf
-        c = canvas.Canvas(nom_fichier, pagesize=A4)
-        width, height = A4  # dimensions page a4
+            if logo_path:
+                # Dimensions du logo (ajustez selon votre logo)
+                logo_width = 5 * cm
+                logo_height = 2 * cm
+                # Position du logo en haut à gauche
+                c.drawImage(logo_path, 1 * cm, height - 3 * cm, width=logo_width, height=logo_height,
+                            preserveAspectRatio=True)
+            else:
+                print(f"Logo non trouvé. Chemins essayés: {possible_paths}")
+        except Exception as e:
+            print(f"Erreur lors du chargement du logo: {e}")
+            # Si erreur, on continue sans logo
 
-        # génération sections du document
-        PDFGenerator._generer_en_tete(c, width, height, facture, client)
-        PDFGenerator._generer_details_location(c, width, height, vehicule, reservation)
-        PDFGenerator._generer_tableau_montants(c, width, height, facture)
-        PDFGenerator._generer_pied_page(c, width, height)
+        # en-tête avec nom entreprise (décalé vers la droite pour laisser place au logo)
+        c.setFont("Helvetica-Bold", 18)
+        c.drawString(7 * cm, height - 2 * cm, "Location de Véhicules")
 
-        # finalisation et sauvegarde
-        c.save()
+        # infos facture
+        c.setFont("Helvetica-Bold", 14)
+        c.drawString(width - 6 * cm, height - 2 * cm, "FACTURE")
 
-        return nom_fichier
+        c.setFont("Helvetica", 10)
+        c.drawString(width - 6 * cm, height - 2.5 * cm, f"N° {facture.id}")
+        c.drawString(width - 6 * cm, height - 3 * cm, f"Date: {facture.date_emission.strftime('%d/%m/%Y')}")
+
+        # rectangle décoratif
+        c.setStrokeColor(colors.grey)
+        c.rect(1 * cm, height - 3.5 * cm, width - 2 * cm, 0.1 * cm, fill=1)
+
+        # infos client
+        c.setFont("Helvetica-Bold", 12)
+        c.drawString(2 * cm, height - 4.5 * cm, "Client")
+
+        c.setFont("Helvetica", 10)
+        c.drawString(2 * cm, height - 5.2 * cm, f"{client.prenom} {client.nom}")
+        c.drawString(2 * cm, height - 5.7 * cm, client.adresse)
+        c.drawString(2 * cm, height - 6.2 * cm, f"Email: {client.email}")
+        c.drawString(2 * cm, height - 6.7 * cm, f"Tél: {client.telephone}")
 
     @staticmethod
     def _generer_en_tete(c, width, height, facture, client):
@@ -83,9 +101,27 @@ class PDFGenerator:
             facture: objet facture
             client: objet client
         """
-        # en-tête avec logo entreprise (simulé)
+        # Ajout du logo (depuis le fichier utils/assets/logo.png)
+        try:
+            # Chemin vers le logo
+            logo_path = os.path.join('utils', 'assets', 'logo.png')
+            # Vérifier si le fichier existe
+            if os.path.exists(logo_path):
+                # Dimensions du logo (ajustez selon votre logo)
+                logo_width = 5 * cm
+                logo_height = 2 * cm
+                # Position du logo en haut à gauche
+                c.drawImage(logo_path, 1 * cm, height - 3 * cm, width=logo_width, height=logo_height,
+                            preserveAspectRatio=True)
+            else:
+                print(f"Logo non trouvé: {logo_path}")
+        except Exception as e:
+            print(f"Erreur lors du chargement du logo: {e}")
+            # Si erreur, on continue sans logo
+
+        # en-tête avec nom entreprise (décalé vers la droite pour laisser place au logo)
         c.setFont("Helvetica-Bold", 18)
-        c.drawString(2 * cm, height - 2 * cm, "Location de Véhicules")
+        c.drawString(7 * cm, height - 2 * cm, "Location de Véhicules")
 
         # infos facture
         c.setFont("Helvetica-Bold", 14)
@@ -225,6 +261,46 @@ class PDFGenerator:
 if __name__ == "__main__":
     # import pour exemple
     from datetime import datetime, timedelta
+    import os
+    import sys
+
+    # Vérifier que le dossier pour le logo existe, sinon le créer
+    assets_dir = os.path.join('utils', 'assets')
+    if not os.path.exists(assets_dir):
+        print(f"Création du dossier {assets_dir} pour le logo...")
+        try:
+            os.makedirs(assets_dir)
+            print(f"✓ Dossier {assets_dir} créé avec succès.")
+        except Exception as e:
+            print(f"✗ Erreur lors de la création du dossier: {e}")
+            sys.exit(1)
+
+    # Vérifier que le logo existe, sinon créer un logo de test
+    logo_path = os.path.join(assets_dir, 'logo.png')
+    if not os.path.exists(logo_path):
+        print(f"Logo non trouvé à {logo_path}, création d'un logo de test...")
+        try:
+            # Essayer d'utiliser PIL pour créer une image simple
+            try:
+                from PIL import Image
+
+                # Créer une image rouge simple de 200x100 pixels
+                img = Image.new('RGB', (200, 100), color='red')
+                img.save(logo_path)
+                print(f"✓ Logo de test créé avec PIL à {logo_path}")
+            except ImportError:
+                # Si PIL n'est pas disponible, créer un fichier PNG minimal
+                # Format PNG minimal (en-tête + IHDR + IEND)
+                png_header = b'\x89PNG\r\n\x1a\n'
+                ihdr_chunk = b'\x00\x00\x00\r' + b'IHDR' + b'\x00\x00\x00d' + b'\x00\x00\x00d' + b'\x08\x02\x00\x00\x00' + b'\xbf\x12\x8a\x1d'
+                iend_chunk = b'\x00\x00\x00\x00' + b'IEND' + b'\xaeB`\x82'
+
+                with open(logo_path, 'wb') as f:
+                    f.write(png_header + ihdr_chunk + iend_chunk)
+                print(f"✓ Logo de test créé manuellement à {logo_path}")
+        except Exception as e:
+            print(f"✗ Erreur lors de la création du logo de test: {e}")
+            print("La génération du PDF continuera mais le logo pourrait ne pas apparaître.")
 
 
     # création objets fictifs pour test
@@ -266,12 +342,41 @@ if __name__ == "__main__":
             return 6  # exemple simplifié
 
 
+    print("\nPréparation des données pour la génération de facture...")
     # création objets test
     facture = FactureTest()
     client = ClientTest()
     vehicule = VehiculeTest()
     reservation = ReservationTest()
 
-    # génération pdf
-    chemin_pdf = PDFGenerator.generer_facture(facture, client, vehicule, reservation)
-    print(f"PDF généré avec succès: {chemin_pdf}")
+    print("\nGénération de la facture PDF avec logo...")
+    try:
+        # génération pdf
+        chemin_pdf = PDFGenerator.generer_facture(facture, client, vehicule, reservation)
+
+        # Vérifier que le fichier a bien été créé
+        if os.path.exists(chemin_pdf):
+            taille = os.path.getsize(chemin_pdf)
+            print(f"✓ PDF généré avec succès: {chemin_pdf} ({taille} octets)")
+
+            # Vérification supplémentaire - tenter de détecter si le logo a été intégré
+            try:
+                from PyPDF2 import PdfReader
+
+                reader = PdfReader(chemin_pdf)
+                page = reader.pages[0]
+
+                # Essayer de détecter des objets image
+                resources = page.get('/Resources', {})
+                xobjects = resources.get('/XObject', {})
+                if len(xobjects) > 0:
+                    print("✓ Le PDF contient des images (le logo est probablement inclus)")
+                else:
+                    print("⚠ Aucune image détectée dans le PDF, le logo pourrait ne pas avoir été inclus.")
+            except Exception as e:
+                print(f"ℹ Impossible de vérifier le contenu du PDF: {e}")
+                print("  Pour confirmer visuellement, ouvrez le PDF généré.")
+        else:
+            print(f"✗ Erreur: Le fichier PDF n'a pas été créé à {chemin_pdf}")
+    except Exception as e:
+        print(f"✗ Erreur lors de la génération du PDF: {e}")
