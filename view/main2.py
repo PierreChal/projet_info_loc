@@ -22,36 +22,87 @@ class WelcomeScreen(QDialog):
                     }
                 """)
         self.push.clicked.connect(self.gotologin)
+        self.push2.clicked.connect(self.gotocreate)
 
     def gotologin(self):
         login = LoginScreen()
         widget.addWidget(login)
         widget.setCurrentIndex(widget.currentIndex() + 1)
 
+    def gotocreate(self):
+        create = CreateAccScreen()
+        widget.addWidget(create)
+        widget.setCurrentIndex(widget.currentIndex() + 1)
+
+
 class LoginScreen(QDialog):
     def __init__(self):
         super(LoginScreen,self).__init__()
         loadUi('login.ui',self)
         self.passwordfield.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.push2.clicked.connect(self.loginfunction)
+        self.connexion.clicked.connect(self.loginfunction)
 
     def loginfunction(self):
         user = self.emailfield.text()
         password = self.passwordfield.text()
 
         if len(user) == 0 or len(password) == 0:
-            self.error.setText("Please input all fields.")
-        # else:
-        #     conn = sqlite3.connect("db_path") # jsp trop comment ça va marcher
-        #     cur = conn.cursor()
-        #     query = 'SELECT password FROM client WHERE email =\'' + user + "\'"
-        #     cur.execute(query)
-        #     result_pass = cur.fetchone()[0]
-        #     if result_pass == password:
-        #         print("Successfully logged in.")
-        #         self.error.setText("")
-        #     else:
-        #         self.error.setText("Invalid username or password")
+            self.erreur.setText("Merci de remplir tous les champs.")
+
+        else:
+            conn = sqlite3.connect("utilisateurs_data.db")
+            cur = conn.cursor()
+            try:
+                cur.execute("SELECT MP FROM login_info WHERE Email = ?", (user,))
+                result = cur.fetchone()
+
+                if result is None:
+                    self.erreur.setText("Cet identifiant n'existe pas.")
+                elif result[0] == password:
+                    print("Connecté avec succès.")
+                    self.erreur.setText("")
+                else:
+                    self.erreur.setText("Mot de passe incorrect.")
+            except Exception as e:
+                self.erreur.setText("Erreur : " + str(e))
+            finally:
+                conn.close()
+
+
+class CreateAccScreen(QDialog):
+    def __init__(self):
+        super(CreateAccScreen, self).__init__()
+        loadUi("createacc.ui",self)
+        self.passwordfield.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.confirmpasswordfield.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.signup.clicked.connect(self.signupfunction)
+
+    def signupfunction(self):
+        user = self.emailfield.text()
+        password = self.passwordfield.text()
+        confirmpassword = self.confirmpasswordfield.text()
+        lastname = self.nom.text()
+        firstname = self.prenom.text()
+        birthday = self.birthday.text()
+
+
+
+        if len(user)==0 or len(password)==0 or len(confirmpassword)==0 or len(lastname)==0 or len(firstname)==0 or len(birthday)==0:
+            self.error.setText("Merci de remplir tous les champs.")
+
+        elif password!=confirmpassword:
+            self.error.setText("Le mot de passe ne correspond pas.")
+        else:
+            conn = sqlite3.connect("utilisateurs_data.db")
+            cur = conn.cursor()
+
+            user_info = [user, password, lastname, firstname, birthday]
+            cur.execute('INSERT INTO login_info (Email, MP, Nom, Prenom, Anniversaire) VALUES (?,?,?,?,?)', user_info)
+
+            conn.commit()
+            conn.close()
+
+
 
 
 app = QApplication(sys.argv)
