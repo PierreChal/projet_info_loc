@@ -1,6 +1,18 @@
 # model/facture.py
-# on fait ici la classe Facture et le pattern Strategy pour la génération de documents
-
+# ce fichier implémente la classe Facture et le pattern Strategy pour générer des documents
+# il fait partie de l'architecture MVC (modèle-vue-contrôleur)
+#
+# structure:
+# - définit la classe Facture avec ses attributs et méthodes de base
+# - implémente le pattern Strategy avec une classe abstraite DocumentStrategy
+# - fournit trois stratégies concrètes : PDF, HTML et Texte
+# - calcule automatiquement les montants TTC et détails de TVA
+#
+# interactions:
+# - utilisé par les contrôleurs pour générer des documents de facturation
+# - dépend des modèles Client, Véhicule et Réservation pour la génération
+# - peut être étendu avec de nouvelles stratégies de génération de documents
+# - permet de produire des formats de sortie variés selon les besoins de l'utilisateur
 from datetime import datetime
 from abc import ABC, abstractmethod
 

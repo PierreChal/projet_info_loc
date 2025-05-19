@@ -1,5 +1,18 @@
 # model/parc.py
-# la classe Parc pour gérer les véhicules
+# ce fichier implémente la classe Parc pour gérer l'ensemble des véhicules disponibles
+# il fait partie de l'architecture MVC (modèle-vue-contrôleur)
+#
+# structure:
+# - définit la classe Parc qui gère une collection de véhicules et leurs réservations
+# - implémente des algorithmes de vérification de disponibilité avec récursivité
+# - fournit des méthodes pour filtrer les véhicules selon différents critères
+# - propose des fonctionnalités d'optimisation et d'analyse du parc
+#
+# interactions:
+# - utilisé par le ParcController pour gérer l'inventaire des véhicules
+# - dépend des classes Véhicule et Réservation pour ses opérations
+# - fournit des méthodes d'analyse pour aider à la prise de décision
+# - sert de modèle central pour toute la gestion de la flotte de véhicules
 
 from datetime import datetime, timedelta
 from model.vehicule import Vehicule, Voiture, Utilitaire, Moto

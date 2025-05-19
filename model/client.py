@@ -1,5 +1,18 @@
 # model/client.py
-# ici, on fait les classes pour la gestion des clients
+# ce fichier définit la classe Client pour la gestion des utilisateurs du système de location
+# il fait partie de l'architecture MVC (modèle-vue-contrôleur)
+#
+# structure:
+# - définit la classe Client avec ses attributs et méthodes
+# - implémente les fonctionnalités liées à la gestion des réservations d'un client
+# - fournit des méthodes pour analyser l'historique des réservations
+# - permet de déterminer si un client est fidèle selon certains critères
+#
+# interactions:
+# - utilisé par le ClientController pour manipuler les données clients
+# - stocke les références aux réservations associées au client
+# - communique avec la classe Reservation pour l'historique des locations
+# - sert de modèle de données pour les vues affichant les informations clients
 
 class Client:
     """

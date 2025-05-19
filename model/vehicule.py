@@ -1,5 +1,18 @@
-# vehicule.py
-# Ce fichier contient les classes liées aux véhicules du système de location
+# model/vehicule.py
+# ce fichier implémente la hiérarchie des classes de véhicules du système de location
+# il fait partie de l'architecture MVC (modèle-vue-contrôleur)
+#
+# structure:
+# - définit une classe abstraite Vehicule avec les attributs et méthodes communs
+# - implémente trois classes dérivées : Voiture, Utilitaire et Moto
+# - utilise le polymorphisme pour les méthodes comme calculer_tarif_journalier
+# - fournit des méthodes de calcul de coûts et d'affichage adaptées à chaque type
+#
+# interactions:
+# - utilisé par le ParcController pour gérer les différents types de véhicules
+# - interagit avec la classe Reservation pour les calculs de prix
+# - sert de modèle de base pour représenter tous les véhicules du système
+# - permet l'extension facile à de nouveaux types de véhicules si nécessaire
 
 from abc import ABC, abstractmethod
 

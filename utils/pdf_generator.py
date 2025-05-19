@@ -1,5 +1,18 @@
 # utils/pdf_generator.py
-# utilitaires pour la génération de documents pdf
+# ce fichier implémente la génération de documents PDF pour les factures du système
+# il fait partie des utilitaires de l'application dans l'architecture MVC
+#
+# structure:
+# - utilise la bibliothèque ReportLab pour créer des documents PDF
+# - définit la classe PDFGenerator avec des méthodes statiques pour la génération
+# - décompose le document en sections logiques (en-tête, détails, tableau, pied de page)
+# - gère la mise en forme avancée avec polices, couleurs et tableaux stylisés
+#
+# interactions:
+# - utilisé par les contrôleurs ou les stratégies de génération de documents
+# - dépend des modèles Facture, Client, Véhicule et Réservation pour les données
+# - crée automatiquement le dossier de destination si nécessaire
+# - produit des fichiers PDF de qualité professionnelle pour les factures clients
 
 # importation de reportlab pour génération pdf
 from reportlab.pdfgen import canvas

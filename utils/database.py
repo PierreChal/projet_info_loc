@@ -22,6 +22,119 @@
 # Database → Contrôleur (retourne des objets métier)
 # Contrôleur → Vue (avec objets métier)
 # Vue → Réponse utilisateur
+#
+# utils/database.py
+# ce fichier implémente la couche d'accès aux données (DAL) pour l'ensemble du système
+# il fait partie des composants fondamentaux de l'architecture MVC, assurant la persistance
+#
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                       STRUCTURE DU MODULE DATABASE                        │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │ ┌─────────────────┐    ┌─────────────────┐    ┌──────────────────┐        │
+# │ │    Véhicules    │    │     Clients     │    │   Réservations   │        │
+# │ ├─────────────────┤    ├─────────────────┤    ├──────────────────┤        │
+# │ │ Sauvegarder     │    │ Sauvegarder     │    │ Sauvegarder      │        │
+# │ │ Charger         │    │ Charger         │    │ Charger          │        │
+# │ │ Supprimer       │    │ Supprimer       │    │ Supprimer        │        │
+# │ │ Rechercher      │    │ Rechercher      │    │ Rechercher       │        │
+# │ └─────────────────┘    └─────────────────┘    └──────────────────┘        │
+# │ ┌─────────────────┐    ┌─────────────────────────────────────────┐        │
+# │ │    Factures     │    │         Utilitaires & Tests             │        │
+# │ ├─────────────────┤    ├─────────────────────────────────────────┤        │
+# │ │ Sauvegarder     │    │ Création tables   │ Fermeture connexion │        │
+# │ │ Charger         │    │ Génération test   │ Gestion erreurs     │        │
+# │ │ Supprimer       │    └─────────────────────────────────────────┘        │
+# │ └─────────────────┘                                                       │
+# └───────────────────────────────────────────────────────────────────────────┘
+#
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                      SCHÉMA DE LA BASE DE DONNÉES                         │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │                                                                           │
+# │  ┌───────────────┐        ┌────────────────┐        ┌───────────────┐    │
+# │  │   vehicules   │        │  reservations  │        │    clients    │    │
+# │  ├───────────────┤      ┌─┴────────────────┤        ├───────────────┤    │
+# │  │ id (PK)       │      │ id (PK)          │        │ id (PK)       │    │
+# │  │ type          │      │ client_id (FK) ──┼────────► nom           │    │
+# │  │ marque        │◄─────┼─ vehicule_id (FK)│        │ prenom        │    │
+# │  │ modele        │      │ date_debut       │        │ adresse       │    │
+# │  │ annee         │      │ date_fin         │        │ telephone     │    │
+# │  │ kilometrage   │      │ prix_total       │        │ email         │    │
+# │  │ prix_achat    │      │ statut           │        └───────────────┘    │
+# │  │ cout_entretien│      └───┬──────────────┘                             │
+# │  │ categorie     │          │                       ┌───────────────┐    │
+# │  │ attributs_json│          │                       │   factures    │    │
+# │  └───────────────┘          │                       ├───────────────┤    │
+# │                             │                       │ id (PK)       │    │
+# │                             └───────────────────────► reservation_id│    │
+# │                                                     │ date_emission │    │
+# │                                                     │ montant_ht    │    │
+# │                                                     │ taux_tva      │    │
+# │                                                     │ montant_ttc   │    │
+# │                                                     └───────────────┘    │
+# └───────────────────────────────────────────────────────────────────────────┘
+#
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                    FLUX D'INTERACTIONS AVEC LES AUTRES MODULES            │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │                                                                           │
+# │  ┌────────────────┐  ┌───────────────┐  ┌────────────────────┐            │
+# │  │  Vue (PyQt5)   │  │  Contrôleurs  │  │ Modèles (Objets)   │            │
+# │  └───────┬────────┘  └───────┬───────┘  └──────────┬─────────┘            │
+# │          │    ▲               │    ▲               │    ▲                 │
+# │   requête│    │ objet         │    │ objets        │    │ instances       │
+# │      user│    │ métier        │    │ métier        │    │ chargées        │
+# │          ▼    │               ▼    │               ▼    │                 │
+# │  ┌───────────────────────────────────────────────────────────────┐        │
+# │  │                          DATABASE                             │        │
+# │  ├───────────────────────────────────────────────────────────────┤        │
+# │  │                                                               │        │
+# │  │ ┌───────────────┐  ┌──────────────┐  ┌────────────────────┐   │        │
+# │  │ │ Traduction    │  │ Conversion   │  │ Sérialisation des  │   │        │
+# │  │ │ objet/SQL     │  │ des types    │  │ attributs en JSON  │   │        │
+# │  │ └───────────────┘  └──────────────┘  └────────────────────┘   │        │
+# │  │                                                               │        │
+# │  │ ┌────────────────────────────────────────────────────────┐    │        │
+# │  │ │              SQLite (Moteur de stockage)               │    │        │
+# │  │ └────────────────────────────────────────────────────────┘    │        │
+# │  └───────────────────────────────────────────────────────────────┘        │
+# └───────────────────────────────────────────────────────────────────────────┘
+#
+# ┌───────────────────────────────────────────────────────────────────────────┐
+# │                  PRINCIPALES INTERACTIONS PAR CONTRÔLEUR                  │
+# ├───────────────────────────────────────────────────────────────────────────┤
+# │                                                                           │
+# │  ┌──────────────────────┐      ┌──────────────────────────────────────┐   │
+# │  │   ParcController     │      │ ► sauvegarder_vehicule()             │   │
+# │  │                      │──────┤ ► charger_vehicule(id)               │   │
+# │  │   (parc_controller)  │      │ ► supprimer_vehicule(id)             │   │
+# │  └──────────────────────┘      │ ► rechercher_vehicules(criteres)     │   │
+# │                                └──────────────────────────────────────┘   │
+# │                                                                           │
+# │  ┌──────────────────────┐      ┌──────────────────────────────────────┐   │
+# │  │   ClientController   │      │ ► sauvegarder_client()               │   │
+# │  │                      │──────┤ ► charger_client(id)                 │   │
+# │  │ (client_controller)  │      │ ► supprimer_client(id)               │   │
+# │  └──────────────────────┘      │ ► rechercher_clients(criteres)       │   │
+# │                                └──────────────────────────────────────┘   │
+# │                                                                           │
+# │  ┌──────────────────────┐      ┌──────────────────────────────────────┐   │
+# │  │ ReservationController│      │ ► sauvegarder_reservation()          │   │
+# │  │                      │──────┤ ► charger_reservation(id)            │   │
+# │  │   (reservation_ctrl) │      │ ► charger_reservations_client(id)    │   │
+# │  └──────────────────────┘      │ ► charger_reservations_vehicule(id)  │   │
+# │                                └──────────────────────────────────────┘   │
+# └───────────────────────────────────────────────────────────────────────────┘
+#
+# particularités techniques:
+# - utilise SQLite comme moteur de base de données embarqué
+# - emploie le pattern Row Factory pour récupérer les résultats sous forme de dictionnaires
+# - sérialise les attributs spécifiques en JSON pour gérer le polymorphisme
+# - maintient les références d'intégrité via contraintes FOREIGN KEY
+# - convertit automatiquement les dates entre formats Python et SQLite
+# - implémente des vérifications de sécurité avant suppressions (dépendances)
+# - fournit une méthode de génération de données de test pour le développement
+# - centralise les transactions et gestion des erreurs SQLite
 
 import sqlite3
 import json

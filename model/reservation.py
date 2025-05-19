@@ -1,5 +1,19 @@
 # model/reservation.py
-# on gère ici les réservations de véhicules
+# ce fichier définit la classe Reservation pour gérer les locations de véhicules
+# il fait partie de l'architecture MVC (modèle-vue-contrôleur)
+#
+# structure:
+# - implémente la classe Reservation avec ses attributs et méthodes
+# - définit le cycle de vie d'une réservation (confirmée, annulée, terminée)
+# - intègre le pattern Observer pour notifier des changements de statut
+# - calcule les prix en fonction de la durée et du type de véhicule
+#
+# interactions:
+# - utilisé par le ReservationController pour gérer le cycle de vie des réservations
+# - lie un client à un véhicule spécifique pour une période donnée
+# - communique avec les classes Client et Véhicule
+# - permet la vérification des conflits de réservation
+# - notifie les observateurs des changements importants de statut
 
 from datetime import datetime, timedelta
 
