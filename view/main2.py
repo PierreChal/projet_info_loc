@@ -30,6 +30,7 @@ class WelcomeScreen(QDialog):
                 """)
         self.push.clicked.connect(self.gotologin)
         self.push2.clicked.connect(self.gotocreate)
+        self.pushButton_3.clicked.connect(self.gotoadmin)
 
     def gotologin(self):
         login = LoginScreen()
@@ -41,6 +42,11 @@ class WelcomeScreen(QDialog):
         widget.addWidget(create)
         widget.setCurrentIndex(widget.currentIndex() + 1)
 
+    def gotoadmin(self):
+        go = AdminScreen()
+        widget.addWidget(go)
+        widget.setCurrentIndex(widget.currentIndex() + 1)
+
 
 class LoginScreen(QDialog):
     def __init__(self):
@@ -48,6 +54,10 @@ class LoginScreen(QDialog):
         loadUi('login.ui', self)
         self.passwordfield.setEchoMode(QtWidgets.QLineEdit.Password)
         self.connexion.clicked.connect(self.loginfunction)
+        self.back_to_home.clicked.connect(self.gotoaccueil)
+
+    def gotoaccueil(self):
+        widget.setCurrentIndex(0)
 
     def loginfunction(self):
         user = self.emailfield.text()
@@ -69,6 +79,48 @@ class LoginScreen(QDialog):
                     print("Connecté avec succès.")
                     self.erreur.setText("")
 
+                    # Après connexion réussie, afficher la page de visualisation des véhicules (déplacé côté admin)
+                    # vehicules_screen = VehiculesScreen()
+                    # widget.addWidget(vehicules_screen)
+                    # widget.setCurrentIndex(widget.currentIndex() + 1)
+                else:
+                    self.erreur.setText("Mot de passe incorrect.")
+            except Exception as e:
+                self.erreur.setText("Erreur : " + str(e))
+            finally:
+                conn.close()
+
+class AdminScreen(QDialog):
+    def __init__(self):
+        super(AdminScreen, self).__init__()
+        loadUi('admiN.ui', self)
+        self.passwordfield.setEchoMode(QtWidgets.QLineEdit.Password)
+        self.connexion.clicked.connect(self.loginfunction)
+        self.back_to_home.clicked.connect(self.gotoaccueil)
+
+    def gotoaccueil(self):
+        widget.setCurrentIndex(0)
+
+    def loginfunction(self):
+        user = self.emailfield.text()
+        password = self.passwordfield.text()
+
+        if len(user) == 0 or len(password) == 0:
+            self.erreur.setText("Merci de remplir tous les champs.")
+
+        else:
+            conn = sqlite3.connect("gestionnaires_data.db")
+            cur = conn.cursor()
+            try:
+                cur.execute("SELECT MP FROM GESTIONNAIRES WHERE Email = ?", (user,))
+                result = cur.fetchone()
+
+                if result is None:
+                    self.erreur.setText("Cet identifiant n'existe pas.")
+                elif result[0] == password:
+                    print("Connecté avec succès.")
+                    self.erreur.setText("")
+
                     # Après connexion réussie, afficher la page de visualisation des véhicules
                     vehicules_screen = VehiculesScreen()
                     widget.addWidget(vehicules_screen)
@@ -80,7 +132,6 @@ class LoginScreen(QDialog):
             finally:
                 conn.close()
 
-
 class CreateAccScreen(QDialog):
     def __init__(self):
         super(CreateAccScreen, self).__init__()
@@ -88,6 +139,10 @@ class CreateAccScreen(QDialog):
         self.passwordfield.setEchoMode(QtWidgets.QLineEdit.Password)
         self.confirmpasswordfield.setEchoMode(QtWidgets.QLineEdit.Password)
         self.signup.clicked.connect(self.signupfunction)
+        self.back_to_home.clicked.connect(self.gotoaccueil)
+
+    def gotoaccueil(self):
+        widget.setCurrentIndex(0)
 
     def signupfunction(self):
         user = self.emailfield.text()
@@ -124,7 +179,6 @@ class CreateAccScreen(QDialog):
 
             conn.commit()
             conn.close()
-
 
 # Nouvelle classe pour visualiser les véhicules
 class VehiculesScreen(QDialog):
