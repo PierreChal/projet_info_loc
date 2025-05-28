@@ -12,6 +12,7 @@ from utils.database import Database
 from controller.parc_controller import ParcController
 from model.vehicule import Voiture, Utilitaire, Moto
 
+from reservation_screen import ReservationScreen
 
 class WelcomeScreen(QDialog):
     def __init__(self):
@@ -79,10 +80,9 @@ class LoginScreen(QDialog):
                     print("Connecté avec succès.")
                     self.erreur.setText("")
 
-                    # Après connexion réussie, afficher la page de visualisation des véhicules (déplacé côté admin)
-                    # vehicules_screen = VehiculesScreen()
-                    # widget.addWidget(vehicules_screen)
-                    # widget.setCurrentIndex(widget.currentIndex() + 1)
+                    reservation_screen = ReservationScreen()
+                    widget.addWidget(reservation_screen)
+                    widget.setCurrentWidget(reservation_screen)
                 else:
                     self.erreur.setText("Mot de passe incorrect.")
             except Exception as e:
@@ -120,6 +120,8 @@ class AdminScreen(QDialog):
                 elif result[0] == password:
                     print("Connecté avec succès.")
                     self.erreur.setText("")
+
+
 
                     # Après connexion réussie, afficher la page de visualisation des véhicules
                     vehicules_screen = VehiculesScreen()
@@ -172,10 +174,9 @@ class CreateAccScreen(QDialog):
                 conn.commit()
                 self.error.setText("Compte créé avec succès.")
 
-                # Après création de compte réussie, afficher la page de visualisation des véhicules
-                vehicules_screen = VehiculesScreen()
-                widget.addWidget(vehicules_screen)
-                widget.setCurrentIndex(widget.currentIndex() + 1)
+                reservation_screen = ReservationScreen()
+                widget.addWidget(reservation_screen)
+                widget.setCurrentWidget(reservation_screen)
 
             conn.commit()
             conn.close()

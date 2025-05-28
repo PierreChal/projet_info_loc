@@ -1,0 +1,97 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>ReservationScreen</class>
+ <widget class="QDialog" name="ReservationScreen">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>955</width>
+    <height>648</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Réservation</string>
+  </property>
+  <property name="styleSheet">
+   <string notr="true">QWidget#widget{
+background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, stop:0 rgba(0, 125, 188, 255), stop:1 rgba(255, 255, 255, 255));}</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item>
+    <layout class="QHBoxLayout" name="layoutTop">
+     <item>
+      <widget class="QLabel" name="labelType">
+       <property name="styleSheet">
+        <string notr="true"/>
+       </property>
+       <property name="text">
+        <string>Type de véhicule:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="typeBox"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelCriteria">
+       <property name="text">
+        <string>Critères:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QComboBox" name="criteriaBox"/>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="layoutDates">
+     <item>
+      <widget class="QLabel" name="labelStart">
+       <property name="text">
+        <string>Date de début:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDateEdit" name="startDate"/>
+     </item>
+     <item>
+      <widget class="QLabel" name="labelEnd">
+       <property name="text">
+        <string>Date de fin:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QDateEdit" name="endDate"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="searchButton">
+       <property name="text">
+        <string>Rechercher</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QTableWidget" name="tableWidget">
+     <property name="styleSheet">
+      <string notr="true">background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, stop:0 rgba(0, 125, 188, 255), stop:1 rgba(255, 255, 255, 255));</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QPushButton" name="reserveButton">
+     <property name="text">
+      <string>Réserver</string>
+     </property>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
