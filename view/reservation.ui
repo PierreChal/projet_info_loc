@@ -23,7 +23,8 @@ background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, st
      <item>
       <widget class="QLabel" name="labelType">
        <property name="styleSheet">
-        <string notr="true"/>
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
        </property>
        <property name="text">
         <string>Type de véhicule:</string>
@@ -31,17 +32,32 @@ background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, st
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="typeBox"/>
+      <widget class="QComboBox" name="typeBox">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;
+</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="labelCriteria">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
        <property name="text">
         <string>Critères:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QComboBox" name="criteriaBox"/>
+      <widget class="QComboBox" name="criteriaBox">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -49,26 +65,48 @@ background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, st
     <layout class="QHBoxLayout" name="layoutDates">
      <item>
       <widget class="QLabel" name="labelStart">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
        <property name="text">
         <string>Date de début:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QDateEdit" name="startDate"/>
+      <widget class="QDateEdit" name="startDate">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QLabel" name="labelEnd">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
        <property name="text">
         <string>Date de fin:</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QDateEdit" name="endDate"/>
+      <widget class="QDateEdit" name="endDate">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
+      </widget>
      </item>
      <item>
       <widget class="QPushButton" name="searchButton">
+       <property name="styleSheet">
+        <string notr="true">
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+       </property>
        <property name="text">
         <string>Rechercher</string>
        </property>
@@ -80,7 +118,8 @@ background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, st
     <widget class="QTableWidget" name="tableWidget">
      <property name="styleSheet">
       <string notr="true">font: 12pt &quot;MS Shell Dlg 2&quot;;
-color: rgb(0, 0, 0);</string>
+color: rgb(0, 0, 0);
+background-color: rgb(150, 201, 227);</string>
      </property>
      <property name="columnCount">
       <number>0</number>
@@ -89,6 +128,11 @@ color: rgb(0, 0, 0);</string>
    </item>
    <item>
     <widget class="QPushButton" name="reserveButton">
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(146, 200, 226);
+border-color: rgb(0, 0, 127);
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+     </property>
      <property name="text">
       <string>Réserver</string>
      </property>

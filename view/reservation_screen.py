@@ -114,7 +114,7 @@ class ReservationScreen(QDialog):
         id_client = 1  # à lier plus tard avec session utilisateur
 
         try:
-            self.res_controller.effectuer_reservation(id_client, id_vehicule, debut, fin)
+            self.res_controller.creer_reservation(id_client, id_vehicule, debut, fin)
             QMessageBox.information(self, "Succès", "Réservation effectuée avec succès !")
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Échec de la réservation : {str(e)}")
