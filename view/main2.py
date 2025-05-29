@@ -44,6 +44,7 @@ class WelcomeScreen(QDialog):
     def goToLogin(self):
         widget.setCurrentIndex(Screen.LOGIN)
 
+
     def goToCreateAccount(self):
         widget.setCurrentIndex(Screen.CREATE_ACCOUNT)
 
