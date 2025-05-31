@@ -18,7 +18,7 @@ from reservation_screen import ReservationScreen
 from utils.password import hash_password_bcrypt, verify_password_bcrypt
 
 from screens import Screen
-
+from PyQt5.QtCore import Qt
 # Votre enum, vous pouvez bien sûr l'extraire dans un module séparé
 
 class WelcomeScreen(QDialog):
