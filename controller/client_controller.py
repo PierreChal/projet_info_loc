@@ -78,6 +78,13 @@ class ClientController:
             print(f"erreur lors de la création du client: {e}")
             return None
 
+    def charger_client(self, id):
+        try:
+            return self.db.charger_client(id)
+        except Exception as e:
+            print(e)
+            return None
+
     def modifier_client(self, client_id, **kwargs):
         """
         modifie les informations d'un client existant.

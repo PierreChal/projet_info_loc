@@ -32,7 +32,7 @@ class ReservationController:
         [votre nom]
     """
 
-    def __init__(self, db, parc_controller=None):
+    def __init__(self, db, parc_controller=None, client_controller=None):
         """
         initialise le contrôleur avec une connexion à la base de données.
 
@@ -42,10 +42,11 @@ class ReservationController:
         """
         self.db = db
         self.parc_controller = parc_controller
+        self.client_controller = client_controller
 
     def creer_reservation(self, client_id, vehicule_id, date_debut, date_fin):
         """
-        crée une nouvelle réservation.
+        crée une nouvelle réservation et génère automatiquement la facture PDF.
 
         args:
             client_id (int): id du client
@@ -54,17 +55,20 @@ class ReservationController:
             date_fin (datetime): date de fin de la réservation
 
         returns:
-            reservation: réservation créée, ou none en cas d'erreur
+            dict: {
+                'reservation': réservation créée,
+                'facture_pdf': chemin du fichier PDF généré (ou None en cas d'erreur)
+            }
         """
         try:
             # validation des données
             if not self._valider_donnees_reservation(client_id, vehicule_id, date_debut, date_fin):
-                return None
+                return {'reservation': None, 'facture_pdf': None}
 
             # vérification de la disponibilité du véhicule
             if self.parc_controller and not self._verifier_disponibilite(vehicule_id, date_debut, date_fin):
                 print("le véhicule n'est pas disponible pour cette période")
-                return None
+                return {'reservation': None, 'facture_pdf': None}
 
             # création de l'objet réservation
             nouvelle_reservation = Reservation(
@@ -86,11 +90,74 @@ class ReservationController:
             reservation_id = self.db.sauvegarder_reservation(nouvelle_reservation)
 
             # récupération de la réservation complète
-            return self.db.charger_reservation(reservation_id)
+            reservation_complete = self.db.charger_reservation(reservation_id)
+
+            # AJOUT : Ajouter la réservation au parc en mémoire
+            if self.parc_controller and reservation_complete:
+                self.parc_controller.parc.reservations.append(reservation_complete)
+                print(f"Réservation ajoutée au parc. Total réservations: {len(self.parc_controller.parc.reservations)}")
+
+            # NOUVEAU : Génération automatique de la facture PDF
+            facture_pdf_path = None
+            if reservation_complete:
+                try:
+                    facture_pdf_path = self._generer_facture_pdf(reservation_complete)
+                    print(f"✓ Facture PDF générée: {facture_pdf_path}")
+                except Exception as e:
+                    print(f"⚠ Erreur lors de la génération de la facture PDF: {e}")
+
+            return {
+                'reservation': reservation_complete,
+                'facture_pdf': facture_pdf_path
+            }
 
         except Exception as e:
             print(f"erreur lors de la création de la réservation: {e}")
-            return None
+            return {'reservation': None, 'facture_pdf': None}
+
+    def _generer_facture_pdf(self, reservation):
+        """
+        Génère une facture PDF pour une réservation.
+
+        args:
+            reservation: objet réservation
+
+        returns:
+            str: chemin du fichier PDF généré
+        """
+        try:
+            # Import des modules nécessaires
+            from datetime import datetime
+            from utils.pdf_generator import PDFGenerator
+            from model.facture import Facture
+
+            # Récupération des données nécessaires
+            client = self.client_controller.charger_client(reservation.client_id) if self.client_controller else None
+            vehicule = self.parc_controller.obtenir_vehicule(reservation.vehicule_id) if self.parc_controller else None
+
+            if not client or not vehicule:
+                raise Exception("Impossible de récupérer les données client ou véhicule")
+
+            # Création de l'objet Facture
+            facture = Facture(
+                id=f"F{reservation.id}",
+                reservation_id=reservation.id,
+                date_emission=datetime.now(),
+                montant_ht=reservation.prix if hasattr(reservation, 'prix') else 100.0,
+                taux_tva=0.2
+            )
+
+            # Calcul du montant TTC
+            facture.montant_ttc = facture.montant_ht * (1 + facture.taux_tva)
+
+            # Génération du PDF
+            chemin_pdf = PDFGenerator.generer_facture(facture, client, vehicule, reservation)
+
+            return chemin_pdf
+
+        except Exception as e:
+            print(f"Erreur lors de la génération de la facture PDF: {e}")
+            raise e
 
     def annuler_reservation(self, reservation_id):
         """
@@ -327,8 +394,8 @@ class ReservationController:
             return False
 
         # vérification que la date de début est dans le futur
-        if date_debut < datetime.now():
-            print("la date de début doit être dans le futur")
+        if date_debut.date() < datetime.now().date():
+            print("la date de début ne peut pas être dans le passé")
             return False
 
         return True

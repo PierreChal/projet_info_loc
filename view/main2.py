@@ -1,19 +1,14 @@
 import sys
 import sqlite3
 
-from enum import IntEnum
 from PyQt5.uic import loadUi
 from PyQt5 import QtWidgets
 from PyQt5.QtWidgets import (
     QApplication, QDialog, QStackedWidget,
-    QTableWidget, QTableWidgetItem,
+    QTableWidget,
     QVBoxLayout, QHBoxLayout, QPushButton, QLabel, QHeaderView
 )
-from PyQt5.QtCore import Qt
 
-from utils.database import Database
-from controller.parc_controller import ParcController
-from model.vehicule import Voiture, Utilitaire, Moto
 from reservation_screen import ReservationScreen
 from utils.password import hash_password_bcrypt, verify_password_bcrypt
 

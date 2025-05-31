@@ -270,12 +270,18 @@ class Moto(Vehicule):
 
 # exemple de ce fichier (n'est executé que si l'on RUN ce fichier)
 if __name__ == "__main__":
-    # on ne peut pas instancier véhicule, mais seulement les classes filles
-    # vehicule = Vehicule(1, "Test", "Test", 2020, 0, 10000, 500, "Test") ca en marcherais pas (pour l'avoir testé)
+    from datetime import datetime, timedelta
+    from model.vehicule import Voiture, Utilitaire, Moto
+    from utils.database import Database
 
-    # Création d'une voiture
-    ExempleVoiture = Voiture(
-        id=1,
+    # Création d'une instance de la base de données
+    db = Database("location.db")
+
+    print("Ajout de véhicules dans la base de données...")
+
+    # Création et ajout de voitures
+    voiture1 = Voiture(
+        id=None,
         marque="Citroen",
         modele="C3",
         annee=2007,
@@ -288,20 +294,43 @@ if __name__ == "__main__":
         options=["Climatisation", "Radio"]
     )
 
-    # affichage
-    print(ExempleVoiture)
+    voiture2 = Voiture(
+        id=None,
+        marque="Renault",
+        modele="Clio",
+        annee=2020,
+        kilometrage=15000,
+        prix_achat=15000,
+        cout_entretien_annuel=600,
+        nb_places=5,
+        puissance=90,
+        carburant="Essence",
+        options=["Climatisation", "GPS", "Bluetooth"]
+    )
 
-    # test de calcul de possession (sur 3 ans)
-    cout_3_ans = ExempleVoiture.calculer_cout_possession(3)
-    print(f"Coût de possession sur 3 ans: {cout_3_ans} €")
+    voiture3 = Voiture(
+        id=None,
+        marque="Peugeot",
+        modele="308",
+        annee=2019,
+        kilometrage=25000,
+        prix_achat=18000,
+        cout_entretien_annuel=800,
+        nb_places=5,
+        puissance=130,
+        carburant="Diesel",
+        options=["Climatisation", "GPS", "Régulateur", "Sièges chauffants"]
+    )
 
-    # Calcul du tarif journalier
-    tarif = ExempleVoiture.calculer_tarif_journalier()
-    print(f"Tarif journalier: {tarif} €")
+    # Ajout des voitures
+    voiture1_id = db.sauvegarder_vehicule(voiture1)
+    voiture2_id = db.sauvegarder_vehicule(voiture2)
+    voiture3_id = db.sauvegarder_vehicule(voiture3)
+    print(f"Voitures ajoutées avec IDs: {voiture1_id}, {voiture2_id}, {voiture3_id}")
 
-    # test des autres classes filles
-    ExempleUtilitaire = Utilitaire(
-        id=2,
+    # Création et ajout d'utilitaires
+    utilitaire1 = Utilitaire(
+        id=None,
         marque="Renault",
         modele="Master",
         annee=2019,
@@ -313,6 +342,55 @@ if __name__ == "__main__":
         hayon=True
     )
 
-    # Affichage des informations de l'utilitaire
-    print("\n" + str(ExempleUtilitaire))
-    print(f"Tarif journalier: {ExempleUtilitaire.calculer_tarif_journalier()} €")
+    utilitaire2 = Utilitaire(
+        id=None,
+        marque="Citroën",
+        modele="Jumpy",
+        annee=2018,
+        kilometrage=45000,
+        prix_achat=20000,
+        cout_entretien_annuel=1200,
+        volume=8,
+        charge_utile=1000,
+        hayon=False
+    )
+
+    # Ajout des utilitaires
+    utilitaire1_id = db.sauvegarder_vehicule(utilitaire1)
+    utilitaire2_id = db.sauvegarder_vehicule(utilitaire2)
+    print(f"Utilitaires ajoutés avec IDs: {utilitaire1_id}, {utilitaire2_id}")
+
+    # Création et ajout de motos
+    moto1 = Moto(
+        id=None,
+        marque="Honda",
+        modele="CB500F",
+        annee=2020,
+        kilometrage=8000,
+        prix_achat=6000,
+        cout_entretien_annuel=400,
+        cylindree=500,
+        type_moto="Roadster"
+    )
+
+    moto2 = Moto(
+        id=None,
+        marque="Yamaha",
+        modele="MT-09",
+        annee=2021,
+        kilometrage=5000,
+        prix_achat=9000,
+        cout_entretien_annuel=500,
+        cylindree=900,
+        type_moto="Sportive"
+    )
+
+    # Ajout des motos
+    moto1_id = db.sauvegarder_vehicule(moto1)
+    moto2_id = db.sauvegarder_vehicule(moto2)
+    print(f"Motos ajoutées avec IDs: {moto1_id}, {moto2_id}")
+
+    print("Tous les véhicules ont été ajoutés avec succès dans la base de données.")
+
+    # Fermeture de la connexion à la base de données
+    db.fermer()
