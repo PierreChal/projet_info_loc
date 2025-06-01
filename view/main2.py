@@ -207,7 +207,7 @@ class VehiculesScreen(QDialog):
 
 
 
-# --- Code principal ---
+# --- Code principal ----
 app = QApplication(sys.argv)
 widget = QStackedWidget()
 widget.setFixedSize(1200, 800)
