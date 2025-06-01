@@ -382,7 +382,7 @@ if __name__ == "__main__":
         prix_achat=9000,
         cout_entretien_annuel=500,
         cylindree=900,
-        type_moto="Sportive"
+        type_moto="Roadster"
     )
 
     # Ajout des motos
