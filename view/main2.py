@@ -81,8 +81,6 @@ class LoginScreen(QDialog):
 
 
 
-
-
 class CreateAccScreen(QDialog):
     def __init__(self):
         super().__init__()
@@ -102,8 +100,9 @@ class CreateAccScreen(QDialog):
         lastname    = self.nom.text()
         firstname   = self.prenom.text()
         birthday    = self.birthday.text()
+        site        = self.site.text()
 
-        if not all([user, password, confirm, lastname, firstname, birthday]):
+        if not all([user, password, confirm, lastname, firstname, birthday, site]):
             self.error.setText("Merci de remplir tous les champs.")
             return
 
@@ -120,8 +119,8 @@ class CreateAccScreen(QDialog):
             else:
                 passwordHash = hash_password_bcrypt(password)
                 cur.execute(
-                    'INSERT INTO login_info (Email, MP, Nom, Prenom, Anniversaire) VALUES (?,?,?,?,?)',
-                    (user, passwordHash, lastname, firstname, birthday)
+                    'INSERT INTO login_info (Email, MP, Nom, Prenom, Anniversaire, Site) VALUES (?,?,?,?,?,?)',
+                    (user, passwordHash, lastname, firstname, birthday, site)
                 )
                 conn.commit()
                 self.error.setText("Compte créé avec succès.")

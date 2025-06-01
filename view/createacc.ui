@@ -30,7 +30,7 @@ background-color: qlineargradient(spread:pad, x1:0.066, y1:0.097, x2:1, y2:1, st
     <property name="geometry">
      <rect>
       <x>510</x>
-      <y>510</y>
+      <y>560</y>
       <width>281</width>
       <height>61</height>
      </rect>
@@ -48,9 +48,9 @@ background-color: rgb(170, 255, 255);</string>
    <widget class="QLabel" name="label">
     <property name="geometry">
      <rect>
-      <x>290</x>
+      <x>220</x>
       <y>140</y>
-      <width>721</width>
+      <width>901</width>
       <height>71</height>
      </rect>
     </property>
@@ -59,7 +59,7 @@ background-color: rgb(170, 255, 255);</string>
 color: rgb(255, 255, 255);</string>
     </property>
     <property name="text">
-     <string> 🐔 Création de votre compte 🐔</string>
+     <string> 🐔 Création de votre compte loueur🐔</string>
     </property>
    </widget>
    <widget class="QLineEdit" name="emailfield">
@@ -496,6 +496,33 @@ background-color: rgb(170, 255, 255);</string>
     </property>
     <property name="text">
      <string>🏠 Retour</string>
+    </property>
+   </widget>
+   <widget class="QLineEdit" name="site">
+    <property name="geometry">
+     <rect>
+      <x>510</x>
+      <y>460</y>
+      <width>291</width>
+      <height>31</height>
+     </rect>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">background-color: rgba(0,0,0,0);
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+    </property>
+   </widget>
+   <widget class="QLabel" name="label_23">
+    <property name="geometry">
+     <rect>
+      <x>650</x>
+      <y>440</y>
+      <width>161</width>
+      <height>16</height>
+     </rect>
+    </property>
+    <property name="text">
+     <string>Site</string>
     </property>
    </widget>
   </widget>

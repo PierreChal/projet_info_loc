@@ -179,7 +179,7 @@ class ReservationScreen(QDialog):
                     disponible = self.parc_controller.verifier_disponibilite_vehicule(
                         vehicule.id, datetime_debut, datetime_fin
                     )
-                    statut = "✅ Disponible" if disponible else "❌ Occupé"
+                    statut = "✅ Disponible" if disponible else "❌ Occupée"
                     item = QTableWidgetItem(statut)
                 elif attribut:
                     valeur = getattr(vehicule, attribut, "")
