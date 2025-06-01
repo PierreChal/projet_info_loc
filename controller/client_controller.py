@@ -170,6 +170,20 @@ class ClientController:
             print(f"erreur lors de la recherche de clients: {e}")
             return []
 
+
+    def lister_tous_clients(self):
+        """
+        Récupère tous les clients de la base de données
+
+        Returns:
+            list: Liste des objets Client
+        """
+        try:
+            return self.db.lister_clients()  # ou la méthode équivalente dans ta DB
+        except Exception as e:
+            print(f"Erreur lors de la récupération des clients: {e}")
+            return []
+
     def obtenir_client(self, client_id):
         """
         récupère un client par son id.
