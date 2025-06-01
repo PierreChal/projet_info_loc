@@ -526,6 +526,23 @@ class Database:
 
         return client.id
 
+    def lister_clients(self):
+        """Récupère tous les clients"""
+        try:
+            self.cursor.execute('SELECT id FROM clients')
+            rows = self.cursor.fetchall()
+
+            clients = []
+            for row in rows:
+                client = self.charger_client(row['id'])
+                if client:
+                    clients.append(client)
+
+            return clients
+        except Exception as e:
+            print(f"Erreur lister_clients: {e}")
+            return []
+
     def charger_client(self, client_id):
         """
         charge un client depuis la base de données

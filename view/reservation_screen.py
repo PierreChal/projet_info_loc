@@ -17,6 +17,7 @@ from PyQt5.QtWidgets import (
     QAbstractItemView,
     QApplication
 )
+import re
 from PyQt5.QtCore import QDate
 from PyQt5.uic import loadUi
 
@@ -28,7 +29,7 @@ class ReservationScreen(QDialog):
         self.tableWidget.setSelectionBehavior(QAbstractItemView.SelectRows)
 
         # Initialisation de la base de données et des contrôleurs
-        self.db = Database("../model/location.db")
+        self.db = Database("../utils/test.db")
         self.parc_controller = ParcController(self.db)
         self.client_controller = ClientController(self.db)
         self.reservation_controller = ReservationController(self.db, self.parc_controller, self.client_controller)
@@ -227,18 +228,71 @@ class ReservationScreen(QDialog):
                 QMessageBox.warning(self, "Dates invalides", "La date de fin doit être postérieure à la date de début")
                 return
 
-            # Demander l'ID du client
-            client_id, ok = QInputDialog.getInt(
-                self,
-                "Client",
-                "Entrez l'ID du client:",
-                value=1,
-                min=1,
-                max=9999
-            )
+            try:
+                # Récupérer tous les clients depuis la base de données
+                if hasattr(self, 'client_controller') and self.client_controller:
+                    clients_disponibles = self.client_controller.lister_tous_clients()
+                else:
+                    # Fallback si pas de client_controller
+                    clients_disponibles = []
 
-            if not ok:
-                return
+                if not clients_disponibles:
+                    # Si aucun client trouvé, permettre la saisie manuelle
+                    client_id, ok = QInputDialog.getInt(
+                        self,
+                        "Client",
+                        "Aucun client trouvé en base.\nEntrez manuellement l'ID du client:",
+                        value=1,
+                        min=1,
+                        max=9999
+                    )
+                    if not ok:
+                        return
+                else:
+                    # Créer une liste pour la ComboBox
+                    items_clients = []
+                    for client in clients_disponibles:
+                        item_text = f"{client.prenom} {client.nom} (ID: {client.id})"
+                        items_clients.append(item_text)
+
+                    # Afficher la liste déroulante
+                    client_choisi, ok = QInputDialog.getItem(
+                        self,
+                        "Sélection du client",
+                        "Choisissez le client pour cette réservation:",
+                        items_clients,
+                        0,
+                        False
+                    )
+
+                    if not ok:
+                        return
+
+                    # Extraire l'ID du texte sélectionné
+                    # Format: "Prénom Nom (ID: 123)"
+                    import re
+                    match = re.search(r'\(ID: (\d+)\)', client_choisi)
+                    if match:
+                        client_id = int(match.group(1))
+                    else:
+                        QMessageBox.warning(self, "Erreur", "Impossible d'extraire l'ID du client")
+                        return
+
+                    print(f"DEBUG: Client sélectionné - ID: {client_id}, Texte: {client_choisi}")
+
+            except Exception as e:
+                print(f"DEBUG: Erreur lors de la récupération des clients: {e}")
+                # Fallback vers saisie manuelle
+                client_id, ok = QInputDialog.getInt(
+                    self,
+                    "Client",
+                    f"Erreur de récupération des clients ({e}).\nEntrez manuellement l'ID:",
+                    value=1,
+                    min=1,
+                    max=9999
+                )
+                if not ok:
+                    return
 
             # DEBUG: Informations de réservation
             print(f"DEBUG: Tentative de réservation")
