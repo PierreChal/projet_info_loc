@@ -34,7 +34,6 @@ class WelcomeScreen(QDialog):
 
         self.push.clicked.connect(self.goToLogin)
         self.push2.clicked.connect(self.goToCreateAccount)
-        self.pushButton_3.clicked.connect(self.goToAdmin)
 
     def goToLogin(self):
         widget.setCurrentIndex(Screen.LOGIN)
@@ -42,9 +41,6 @@ class WelcomeScreen(QDialog):
 
     def goToCreateAccount(self):
         widget.setCurrentIndex(Screen.CREATE_ACCOUNT)
-
-    def goToAdmin(self):
-        widget.setCurrentIndex(Screen.ADMIN)
 
 
 class LoginScreen(QDialog):
@@ -84,41 +80,7 @@ class LoginScreen(QDialog):
             conn.close()
 
 
-class AdminScreen(QDialog):
-    def __init__(self):
-        super().__init__()
-        loadUi('admiN.ui', self)
-        self.passwordfield.setEchoMode(QtWidgets.QLineEdit.Password)
-        self.connexion.clicked.connect(self.loginfunction)
-        self.back_to_home.clicked.connect(self.goToWelcome)
 
-    def goToWelcome(self):
-        widget.setCurrentIndex(Screen.WELCOME)
-
-    def loginfunction(self):
-        user = self.emailfield.text()
-        password = self.passwordfield.text()
-
-        if not user or not password:
-            self.erreur.setText("Merci de remplir tous les champs.")
-            return
-
-        conn = sqlite3.connect("gestionnaires_data.db")
-        cur = conn.cursor()
-        try:
-            cur.execute("SELECT MP FROM GESTIONNAIRES WHERE Email = ?", (user,))
-            result = cur.fetchone()
-            if result is None:
-                self.erreur.setText("Cet identifiant n'existe pas.")
-            elif result[0] == password:
-                self.erreur.setText("")
-                widget.setCurrentIndex(Screen.VEHICULES)
-            else:
-                self.erreur.setText("Mot de passe incorrect.")
-        except Exception as e:
-            self.erreur.setText("Erreur : " + str(e))
-        finally:
-            conn.close()
 
 
 class CreateAccScreen(QDialog):
@@ -217,7 +179,6 @@ screens = [
     WelcomeScreen(),
     LoginScreen(),
     CreateAccScreen(),
-    AdminScreen(),
     VehiculesScreen(),
     ReservationScreen()
 ]
