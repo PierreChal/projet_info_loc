@@ -280,7 +280,9 @@ class ReservationScreen(QDialog):
         self.tableWidget.setColumnCount(0)
 
     def goToBilan(self):
-        widget.setCurrentIndex(Screen.BILAN)
+        from bilan_screen import BilanScreen
+        bilan = BilanScreen(self.parc_controller.parc)
+        bilan.exec_()
 
     def reserver(self):
         """Créer une réservation pour le véhicule sélectionné"""

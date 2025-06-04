@@ -148,6 +148,18 @@ font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
      </property>
     </widget>
    </item>
+   <item>
+    <widget class="QPushButton" name="bilanButton">
+     <property name="styleSheet">
+      <string notr="true">background-color: rgb(146, 200, 226);
+border-color: rgb(0, 0, 127);
+font: 12pt &quot;MS Shell Dlg 2&quot;;</string>
+     </property>
+     <property name="text">
+      <string>Bilan comptable 💶 </string>
+     </property>
+    </widget>
+   </item>
   </layout>
  </widget>
  <resources/>

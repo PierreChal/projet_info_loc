@@ -14,6 +14,7 @@ from utils.password import hash_password_bcrypt, verify_password_bcrypt
 
 from screens import Screen
 from PyQt5.QtCore import Qt
+from bilan_screen import BilanScreen
 # Votre enum, vous pouvez bien sûr l'extraire dans un module séparé
 
 class WelcomeScreen(QDialog):
@@ -173,15 +174,23 @@ app = QApplication(sys.argv)
 widget = QStackedWidget()
 widget.setFixedSize(1200, 800)
 
-# Instanciation de tous les écrans dans l’ordre défini par Screen
+# Étape 1 : on instancie chaque écran indépendamment
+welcome_screen = WelcomeScreen()
+login_screen = LoginScreen()
+create_acc_screen = CreateAccScreen()
+vehicules_screen = VehiculesScreen()
+reservation_screen = ReservationScreen()
+
+bilan_screen = BilanScreen(reservation_screen.parc_controller.parc)
+
 screens = [
-    WelcomeScreen(),
-    LoginScreen(),
-    CreateAccScreen(),
-    VehiculesScreen(),
-    ReservationScreen(),
-    BilanScreen(screens[4].parc_controller.parc)
+    welcome_screen,
+    login_screen,
+    create_acc_screen,
+    vehicules_screen,
+    reservation_screen
 ]
+
 for screen in screens:
     widget.addWidget(screen)
 

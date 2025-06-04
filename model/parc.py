@@ -591,13 +591,13 @@ if __name__ == "__main__":
         ))
 
 # Test de l’optimisation
-resultats_optimisation = parc.optimiser_parc(historique, budget_annuel=40000)
-
-print("\nOptimisation du parc:")
-print("→ Véhicules à retirer :")
-for v in resultats_optimisation['vehicules_a_retirer']:
-    print(f"   - {v.marque} {v.modele} (ID {v.id})")
-
-print("→ Recommandations d'achat :")
-for type_, nombre in resultats_optimisation['recommandations_achat'].items():
-    print(f"   - {nombre} x {type_}")
+# resultats_optimisation = parc.optimiser_parc(historique, budget_annuel=40000)
+#
+# print("\nOptimisation du parc:")
+# print("→ Véhicules à retirer :")
+# for v in resultats_optimisation['vehicules_a_retirer']:
+#     print(f"   - {v.marque} {v.modele} (ID {v.id})")
+#
+# print("→ Recommandations d'achat :")
+# for type_, nombre in resultats_optimisation['recommandations_achat'].items():
+#     print(f"   - {nombre} x {type_}")
