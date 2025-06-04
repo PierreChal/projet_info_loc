@@ -279,7 +279,7 @@ class Parc:
 
         # Définir seuils arbitraires
         seuil_sous_utilisation = 0.20  # moins de 20% utilisé = sous-utilisé
-        seuil_demande = 3  # au moins 3 refus = forte demande
+        seuil_demande = 0.8
 
         # Identifier les véhicules à retirer
         vehicules_a_retirer = [vehicule for vehicule in self.vehicules
