@@ -179,7 +179,8 @@ screens = [
     LoginScreen(),
     CreateAccScreen(),
     VehiculesScreen(),
-    ReservationScreen()
+    ReservationScreen(),
+    BilanScreen(screens[4].parc_controller.parc)
 ]
 for screen in screens:
     widget.addWidget(screen)

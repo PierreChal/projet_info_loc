@@ -41,6 +41,7 @@ class ReservationScreen(QDialog):
         self.reserveButton.clicked.connect(self.reserver)
         # Connexion de la checkbox
         self.showUnavailableBox.stateChanged.connect(self.rechercher)
+        self.bilanButton.clicked.connect(self.goToBilan)
 
         # Configuration des dates par défaut
         self.startDate.setDate(QDate.currentDate())
@@ -277,6 +278,9 @@ class ReservationScreen(QDialog):
         """Vide le tableau"""
         self.tableWidget.setRowCount(0)
         self.tableWidget.setColumnCount(0)
+
+    def goToBilan(self):
+        widget.setCurrentIndex(Screen.BILAN)
 
     def reserver(self):
         """Créer une réservation pour le véhicule sélectionné"""
