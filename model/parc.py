@@ -274,8 +274,30 @@ class Parc:
         Returns:
             dict: Recommandations pour l'optimisation du parc
         """
-        # TODO: faire cette fonciton
-        return
+        taux_utilisation = self._calculer_taux_utilisation(historique_reservations)
+        demandes_refusees = self._analyser_demandes_refusees(historique_reservations)
+
+        # Définir seuils arbitraires
+        seuil_sous_utilisation = 0.20  # moins de 20% utilisé = sous-utilisé
+        seuil_demande = 3  # au moins 3 refus = forte demande
+
+        # Identifier les véhicules à retirer
+        vehicules_a_retirer = [vehicule for vehicule in self.vehicules
+                               if taux_utilisation.get(vehicule.id, 0) < seuil_sous_utilisation
+                               and not self._a_reservations_actives(vehicule.id)]
+
+        # Identifier les types en forte demande
+        types_forte_demande = {
+            type_: nb for type_, nb in demandes_refusees.items() if nb >= seuil_demande
+        }
+
+        # Proposer des acquisitions
+        recommandations_achat = self._recommander_acquisitions(types_forte_demande, demandes_refusees, budget_annuel)
+
+        return {
+            "vehicules_a_retirer": vehicules_a_retirer,
+            "recommandations_achat": recommandations_achat
+        }
 
     def _calculer_taux_utilisation(self, historique_reservations):
         """
@@ -322,6 +344,31 @@ class Parc:
             taux_utilisation[vehicule_id] = min(jours / jours_total, 1.0)
 
         return taux_utilisation
+
+    def _recommander_acquisitions(self, types_forte_demande, demandes_refusees, budget_total):
+        """
+        Recommande des acquisitions de véhicules en fonction des besoins et du budget.
+
+        Returns:
+            dict: {type_vehicule: nombre_recommandé}
+        """
+        if not budget_total:
+            budget_total = float('inf')  # si aucun budget fourni, considérer illimité (ex : simulation)
+
+        # Coût moyen par type (approximé à partir du parc)
+        cout_moyen_par_type = {"Voiture": 15000, "Utilitaire": 25000, "Moto": 8000}
+        recommandations = {}
+
+        for type_, refus in types_forte_demande.items():
+            prix = cout_moyen_par_type.get(type_, 15000)
+            nb_max = budget_total // prix
+            nb_achat = min(nb_max, refus // 2 + 1)  # achat modéré en proportion du refus
+
+            if nb_achat > 0:
+                recommandations[type_] = int(nb_achat)
+                budget_total -= prix * nb_achat
+
+        return recommandations
 
     def _analyser_demandes_refusees(self, historique_reservations):
         """
@@ -502,8 +549,18 @@ if __name__ == "__main__":
     for vehicule in vehicules_dispo:
         print(f"- {vehicule}")
 
-    # création d'un historique de réservations pour le test d'optimisation (TODO)
+    # création d'un historique de réservations pour le test d'optimisation
     historique = []
+    for i in range(5):
+        historique.append(Reservation(
+            id=300 + i,
+            client_id=103,
+            vehicule_id=3,
+            date_debut=aujourd_hui - timedelta(days=30 * i),
+            date_fin=aujourd_hui - timedelta(days=30 * i - 3),
+            prix_total=400,
+            statut="annulée"
+        ))
 
     # Réservations passées pour voiture1 (beaucoup de réservations = forte demande)
     for i in range(30):
@@ -533,3 +590,14 @@ if __name__ == "__main__":
             statut="terminée"
         ))
 
+# Test de l’optimisation
+resultats_optimisation = parc.optimiser_parc(historique, budget_annuel=40000)
+
+print("\nOptimisation du parc:")
+print("→ Véhicules à retirer :")
+for v in resultats_optimisation['vehicules_a_retirer']:
+    print(f"   - {v.marque} {v.modele} (ID {v.id})")
+
+print("→ Recommandations d'achat :")
+for type_, nombre in resultats_optimisation['recommandations_achat'].items():
+    print(f"   - {nombre} x {type_}")
