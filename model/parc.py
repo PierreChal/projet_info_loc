@@ -355,20 +355,60 @@ class Parc:
 
         return demandes_refusees
 
-    def _recommander_acquisitions(self, types_forte_demande, demandes_refusees, budget_total):
+    def _trouver_vehicule_par_id(self, vehicule_id):
         """
-        Recommande des acquisitions de véhicules en fonction des besoins et du budget.
+        Trouve un véhicule par son ID dans la liste des véhicules du parc
 
         Args:
-            types_forte_demande (dict): Types de véhicules en forte demande
-            demandes_refusees (dict): Statistiques sur les demandes refusées
-            budget_total (float): Budget total disponible
+            vehicule_id (int): ID du véhicule à rechercher
 
         Returns:
-            dict: Recommandations d'acquisition
+            Vehicule: Le véhicule trouvé ou None si non trouvé
         """
-        # TODO: faire cette fonciton
-        return
+        for vehicule in self.vehicules:
+            if vehicule.id == vehicule_id:
+                return vehicule
+        return None
+
+    def obtenir_vehicule(self, vehicule_id):
+        """
+        Alias public pour _trouver_vehicule_par_id
+
+        Args:
+            vehicule_id (int): ID du véhicule
+
+        Returns:
+            Vehicule: Le véhicule trouvé ou None
+        """
+        return self._trouver_vehicule_par_id(vehicule_id)
+
+    def ajouter_vehicule(self, vehicule):
+        """
+        Ajoute un véhicule au parc
+
+        Args:
+            vehicule: Instance du véhicule à ajouter
+        """
+        if vehicule and vehicule not in self.vehicules:
+            self.vehicules.append(vehicule)
+            return True
+        return False
+
+    def retirer_vehicule(self, vehicule_id):
+        """
+        Retire un véhicule du parc par son ID
+
+        Args:
+            vehicule_id (int): ID du véhicule à retirer
+
+        Returns:
+            bool: True si retiré avec succès, False sinon
+        """
+        vehicule = self._trouver_vehicule_par_id(vehicule_id)
+        if vehicule:
+            self.vehicules.remove(vehicule)
+            return True
+        return False
 
 
 # exemple de ce fichier (n'est executé que si l'on RUN ce fichier)

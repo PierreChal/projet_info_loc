@@ -21,6 +21,7 @@ import re
 from PyQt5.QtCore import QDate
 from PyQt5.uic import loadUi
 
+
 class ReservationScreen(QDialog):
     def __init__(self):
         super(ReservationScreen, self).__init__()
@@ -47,6 +48,9 @@ class ReservationScreen(QDialog):
 
         # Chargement des types de véhicules
         self.load_types()
+
+        # IMPORTANT: Connexions pour le calcul automatique du prix
+        self.setup_date_connections()
 
     def load_types(self):
         """Charge les types de véhicules disponibles"""
@@ -88,13 +92,13 @@ class ReservationScreen(QDialog):
                 criteres = {"cylindree": {"min": 500}}
 
             # DEBUG: Avant la recherche de disponibilité
-            print(f"DEBUG: Recherche pour véhicule type {type_vehicule}, dates {datetime_debut} à {datetime_fin}")
-            print(f"DEBUG: Nombre total de réservations dans le parc: {len(self.parc_controller.parc.reservations)}")
+            # print(f"DEBUG: Recherche pour véhicule type {type_vehicule}, dates {datetime_debut} à {datetime_fin}")
+            # print(f"DEBUG: Nombre total de réservations dans le parc: {len(self.parc_controller.parc.reservations)}")
 
             # Filtrage selon la checkbox
             if self.showUnavailableBox.isChecked():
                 # Afficher tous les véhicules (disponibles + indisponibles)
-                print("DEBUG: Affichage de tous les véhicules (disponibles + indisponibles)")
+                # print("DEBUG: Affichage de tous les véhicules (disponibles + indisponibles)")
                 tous_vehicules = self.parc_controller.rechercher_vehicules(criteres={"type": type_vehicule})
                 vehicules_a_afficher = []
                 for v in tous_vehicules:
@@ -102,7 +106,7 @@ class ReservationScreen(QDialog):
                         vehicules_a_afficher.append(v)
             else:
                 # Afficher seulement les disponibles (comportement actuel)
-                print("DEBUG: Affichage seulement des véhicules disponibles")
+                # print("DEBUG: Affichage seulement des véhicules disponibles")
                 vehicules_a_afficher = self.parc_controller.verifier_disponibilite(
                     type_vehicule, criteres, datetime_debut, datetime_fin
                 )
@@ -118,6 +122,69 @@ class ReservationScreen(QDialog):
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Erreur lors de la recherche : {str(e)}")
             self._clear_table()
+
+    def setup_date_connections(self):
+        """Connecte les changements de dates au recalcul du prix"""
+        if hasattr(self, 'startDate'):
+            self.startDate.dateChanged.connect(self.on_dates_changed)
+        if hasattr(self, 'endDate'):
+            self.endDate.dateChanged.connect(self.on_dates_changed)
+        if hasattr(self, 'typeBox'):
+            self.typeBox.currentTextChanged.connect(self.on_dates_changed)
+
+    def on_dates_changed(self):
+        """Appelée quand les dates changent"""
+        if (hasattr(self, 'tableWidget') and
+                self.tableWidget.currentRow() >= 0 and
+                hasattr(self, 'startDate') and
+                hasattr(self, 'endDate')):
+            self.calculer_et_afficher_devis()
+
+    def calculer_et_afficher_devis(self):
+        """Calcule et affiche le prix du véhicule sélectionné"""
+        try:
+            # Vérifier qu'un véhicule est sélectionné dans le tableau
+            current_row = self.tableWidget.currentRow()
+            if current_row < 0:
+                return
+
+            # Récupérer l'ID du véhicule depuis le tableau
+            vehicule_id = int(self.tableWidget.item(current_row, 0).text())
+
+            # Récupérer les dates depuis vos champs
+            date_debut = self.startDate.date().toPyDate()
+            date_fin = self.endDate.date().toPyDate()
+
+            if date_fin <= date_debut:
+                self._afficher_message_prix("❌ La date de fin doit être après la date de début", "red")
+                return
+
+            # Appel au contrôleur pour obtenir le devis
+            devis = self.reservation_controller.obtenir_devis(vehicule_id, date_debut, date_fin)
+
+            if devis:
+                # Affichage du calcul de prix
+                texte_devis = f"""📊 DEVIS DÉTAILLÉ:
+
+⏱️ Durée: {devis['nb_jours']} jour(s)
+💰 Tarif journalier: {devis['tarif_journalier']:.2f}€
+📝 Prix de base: {devis['prix_base']:.2f}€"""
+
+                if devis['reduction_pourcent'] > 0:
+                    texte_devis += f"""
+🎉 Réduction ({devis['reduction_pourcent']}%): -{devis['economie']:.2f}€"""
+
+                texte_devis += f"""
+
+💳 PRIX TOTAL: {devis['prix_final']:.2f}€"""
+
+                self._afficher_message_prix(texte_devis, "green")
+            else:
+                self._afficher_message_prix("❌ Erreur de calcul du prix", "red")
+
+        except Exception as e:
+            self._afficher_message_prix(f"❌ Erreur: {str(e)}", "red")
+            print(f"Erreur calcul devis: {e}")
 
     def _correspond_criteres(self, vehicule, criteres):
         """Vérifie si un véhicule correspond aux critères (copie de la logique du parc)"""
@@ -142,6 +209,20 @@ class ReservationScreen(QDialog):
 
         return True
 
+    def _afficher_message_prix(self, message, couleur):
+        """Affiche le message de prix"""
+        # Option 1: Si vous avez un label dans votre .ui
+        if hasattr(self, 'labelPrix'):
+            self.labelPrix.setText(message)
+            if couleur == "green":
+                self.labelPrix.setStyleSheet(
+                    "color: green; border: 1px solid green; padding: 5px; background-color: #f0fff0;")
+            else:
+                self.labelPrix.setStyleSheet(
+                    "color: red; border: 1px solid red; padding: 5px; background-color: #fff0f0;")
+
+        # Option 2: Affichage dans la console (toujours actif)
+        print(f"PRIX: {message}")
 
     def _afficher_vehicules(self, vehicules, type_vehicule):
         """Affiche les véhicules dans le tableau"""
@@ -228,20 +309,24 @@ class ReservationScreen(QDialog):
                 QMessageBox.warning(self, "Dates invalides", "La date de fin doit être postérieure à la date de début")
                 return
 
+            # NOUVEAU: Calculer le devis avant de continuer
+            devis = self.reservation_controller.obtenir_devis(vehicule_id, date_debut, date_fin)
+            prix_info = ""
+            if devis:
+                prix_info = f"\n💰 Prix calculé: {devis['prix_final']:.2f}€ pour {devis['nb_jours']} jour(s)"
+                if devis['reduction_pourcent'] > 0:
+                    prix_info += f" (réduction de {devis['reduction_pourcent']}%)"
+
+            # Sélection du client
             try:
-                # Récupérer tous les clients depuis la base de données
-                if hasattr(self, 'client_controller') and self.client_controller:
-                    clients_disponibles = self.client_controller.lister_tous_clients()
-                else:
-                    # Fallback si pas de client_controller
-                    clients_disponibles = []
+                clients_disponibles = self.client_controller.lister_tous_clients() if hasattr(self,
+                                                                                              'client_controller') and self.client_controller else []
 
                 if not clients_disponibles:
-                    # Si aucun client trouvé, permettre la saisie manuelle
                     client_id, ok = QInputDialog.getInt(
                         self,
                         "Client",
-                        "Aucun client trouvé en base.\nEntrez manuellement l'ID du client:",
+                        f"Aucun client trouvé en base.\nEntrez manuellement l'ID du client:{prix_info}",
                         value=1,
                         min=1,
                         max=9999
@@ -249,17 +334,15 @@ class ReservationScreen(QDialog):
                     if not ok:
                         return
                 else:
-                    # Créer une liste pour la ComboBox
                     items_clients = []
                     for client in clients_disponibles:
                         item_text = f"{client.prenom} {client.nom} (ID: {client.id})"
                         items_clients.append(item_text)
 
-                    # Afficher la liste déroulante
                     client_choisi, ok = QInputDialog.getItem(
                         self,
                         "Sélection du client",
-                        "Choisissez le client pour cette réservation:",
+                        f"Choisissez le client pour cette réservation:{prix_info}",
                         items_clients,
                         0,
                         False
@@ -268,9 +351,6 @@ class ReservationScreen(QDialog):
                     if not ok:
                         return
 
-                    # Extraire l'ID du texte sélectionné
-                    # Format: "Prénom Nom (ID: 123)"
-                    import re
                     match = re.search(r'\(ID: (\d+)\)', client_choisi)
                     if match:
                         client_id = int(match.group(1))
@@ -278,15 +358,12 @@ class ReservationScreen(QDialog):
                         QMessageBox.warning(self, "Erreur", "Impossible d'extraire l'ID du client")
                         return
 
-                    print(f"DEBUG: Client sélectionné - ID: {client_id}, Texte: {client_choisi}")
-
             except Exception as e:
-                print(f"DEBUG: Erreur lors de la récupération des clients: {e}")
-                # Fallback vers saisie manuelle
+                # print(f"DEBUG: Erreur lors de la récupération des clients: {e}")
                 client_id, ok = QInputDialog.getInt(
                     self,
                     "Client",
-                    f"Erreur de récupération des clients ({e}).\nEntrez manuellement l'ID:",
+                    f"Erreur de récupération des clients ({e}).\nEntrez manuellement l'ID:{prix_info}",
                     value=1,
                     min=1,
                     max=9999
@@ -294,68 +371,41 @@ class ReservationScreen(QDialog):
                 if not ok:
                     return
 
-            # DEBUG: Informations de réservation
-            print(f"DEBUG: Tentative de réservation")
-            print(f"  - Client ID: {client_id}")
-            print(f"  - Véhicule ID: {vehicule_id} ({vehicule_info})")
-            print(f"  - Dates: {datetime_debut} à {datetime_fin}")
-
-            # Création de la réservation avec génération automatique de PDF
+            # Création de la réservation avec prix calculé automatiquement
+            # print(f"DEBUG: Création de réservation avec prix automatique")
             resultat = self.reservation_controller.creer_reservation(
                 client_id, vehicule_id, datetime_debut, datetime_fin
             )
 
             reservation = resultat['reservation']
-            facture_pdf = resultat['facture_pdf']
-
-            # DEBUG: Vérifier que la réservation est bien créée
-            if reservation:
-                print(f"DEBUG: Réservation créée - ID: {reservation.id}, Statut: {reservation.statut}")
-                print(f"DEBUG: Véhicule {vehicule_id}, du {datetime_debut} au {datetime_fin}")
-
-                # DEBUG: Vérifier les réservations dans le parc
-                print(f"DEBUG: Nombre de réservations dans le parc: {len(self.parc_controller.parc.reservations)}")
-                for res in self.parc_controller.parc.reservations:
-                    if res.vehicule_id == vehicule_id:
-                        print(
-                            f"  - Réservation véhicule {res.vehicule_id}: {res.date_debut} à {res.date_fin}, statut: {res.statut}")
+            facture_pdf = resultat.get('facture_pdf', None)
 
             if reservation:
-                # Message de succès avec info sur la facture
-                message = f"Réservation confirmée !\n\n"
-                message += f"Numéro de réservation: {reservation.id}\n"
-                message += f"Client ID: {client_id}\n"
-                message += f"Véhicule: {vehicule_info}\n"
-                message += f"Période: {datetime_debut.strftime('%d/%m/%Y')} au {datetime_fin.strftime('%d/%m/%Y')}\n"
+                # Message avec prix détaillé
+                message = f"✅ Réservation confirmée !\n\n"
+                message += f"📋 Numéro: {reservation.id}\n"
+                message += f"👤 Client ID: {client_id}\n"
+                message += f"🚗 Véhicule: {vehicule_info}\n"
+                message += f"📅 Du {datetime_debut.strftime('%d/%m/%Y')} au {datetime_fin.strftime('%d/%m/%Y')}\n"
 
-                # Ajouter le prix si disponible
-                if hasattr(reservation, 'prix') and reservation.prix:
-                    message += f"Prix: {reservation.prix:.2f} €\n"
+                # Affichage du prix calculé
+                if hasattr(reservation, 'prix_total') and reservation.prix_total:
+                    duree = (datetime_fin.date() - datetime_debut.date()).days
+                    message += f"⏱️ Durée: {duree} jour(s)\n"
+                    message += f"💰 Prix total: {reservation.prix_total:.2f}€\n"
 
-                # Information sur la facture PDF
                 if facture_pdf:
-                    message += f"\n✓ Facture PDF générée: {facture_pdf}"
-                    message += f"\nLe fichier PDF a été sauvegardé dans le dossier de travail."
-                else:
-                    message += f"\n⚠ Facture PDF non générée (erreur technique)"
+                    message += f"\n✓ Facture PDF: {facture_pdf}"
 
                 QMessageBox.information(self, "Réservation confirmée", message)
-
-                # Actualiser l'affichage pour voir les changements de disponibilité
-                self.rechercher()
-
+                self.rechercher()  # Actualiser l'affichage
             else:
-                QMessageBox.warning(self, "Erreur",
-                                    "Impossible de créer la réservation.\n\n"
-                                    "Vérifiez que:\n"
-                                    "- Le client existe\n"
-                                    "- Le véhicule est disponible\n"
-                                    "- Les dates sont valides")
+                QMessageBox.warning(self, "Erreur", "Impossible de créer la réservation")
 
         except ValueError as e:
             QMessageBox.critical(self, "Erreur de saisie", f"Données invalides: {str(e)}")
         except Exception as e:
             QMessageBox.critical(self, "Erreur", f"Erreur lors de la réservation: {str(e)}")
-            print(f"DEBUG: Erreur détaillée - {e}")
+            # print(f"DEBUG: Erreur détaillée - {e}")
             import traceback
             traceback.print_exc()

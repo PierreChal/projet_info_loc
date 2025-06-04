@@ -139,7 +139,7 @@ class Voiture(Vehicule):
         if self.puissance < 100:
             # petite cylindrée (moins de 100 chevaux), ma voiture par exemple
             tarif_base = 40
-        elif 100 <self.puissance < 150:
+        elif self.puissance < 150:
             # moyenne cylindrée
             tarif_base = 60
         else:
@@ -202,7 +202,7 @@ class Utilitaire(Vehicule):
         if self.volume < 5:
             # petit utilitaire
             tarif_base = 50
-        elif 5< self.volume < 10:
+        elif self.volume < 10:
             # utilitaire moyen
             tarif_base = 70
         else:
@@ -254,7 +254,7 @@ class Moto(Vehicule):
         if self.cylindree < 500:
             # petite
             return 30
-        elif 500<self.cylindree < 800:
+        elif self.cylindree < 800:
             # moyenne
             return 40
         else:

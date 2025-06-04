@@ -46,90 +46,139 @@ class ReservationController:
 
     def creer_reservation(self, client_id, vehicule_id, date_debut, date_fin):
         """
-        crée une nouvelle réservation et génère automatiquement la facture PDF.
+        Crée une réservation avec calcul automatique du prix et génération de PDF
 
-        args:
-            client_id (int): id du client
-            vehicule_id (int): id du véhicule
-            date_debut (datetime): date de début de la réservation
-            date_fin (datetime): date de fin de la réservation
+        Args:
+            client_id: ID du client
+            vehicule_id: ID du véhicule
+            date_debut: Date de début (datetime)
+            date_fin: Date de fin (datetime)
 
-        returns:
-            dict: {
-                'reservation': réservation créée,
-                'facture_pdf': chemin du fichier PDF généré (ou None en cas d'erreur)
-            }
+        Returns:
+            dict: {'reservation': objet_reservation, 'facture_pdf': chemin_pdf}
         """
         try:
-            # validation des données
-            if not self._valider_donnees_reservation(client_id, vehicule_id, date_debut, date_fin):
-                return {'reservation': None, 'facture_pdf': None}
+            # CORRECTION: Utiliser parc_controller au lieu de parc
+            if not hasattr(self, 'parc_controller') or not self.parc_controller:
+                raise ValueError("Contrôleur de parc non disponible")
 
-            # vérification de la disponibilité du véhicule
-            if self.parc_controller and not self._verifier_disponibilite(vehicule_id, date_debut, date_fin):
-                print("le véhicule n'est pas disponible pour cette période")
-                return {'reservation': None, 'facture_pdf': None}
+            # Récupération du véhicule pour le calcul de prix
+            vehicule = self.parc_controller.parc._trouver_vehicule_par_id(vehicule_id)
+            if not vehicule:
+                raise ValueError(f"Véhicule {vehicule_id} non trouvé")
 
-            # création de l'objet réservation
-            nouvelle_reservation = Reservation(
-                id=None,
-                client_id=client_id,
-                vehicule_id=vehicule_id,
-                date_debut=date_debut,
-                date_fin=date_fin,
-                statut="confirmée"
-            )
+            # Vérification de disponibilité avant création
+            if not self.parc_controller.verifier_disponibilite_vehicule(vehicule_id, date_debut, date_fin):
+                raise ValueError("Véhicule non disponible pour cette période")
 
-            # calcul du prix si possible
-            if self.parc_controller:
-                vehicule = self.parc_controller.obtenir_vehicule(vehicule_id)
-                if vehicule:
-                    nouvelle_reservation.calculer_prix(vehicule)
+            # Génération d'un ID unique pour la réservation
+            reservation_id = self._generer_id_reservation()
 
-            # sauvegarde dans la base de données
-            reservation_id = self.db.sauvegarder_reservation(nouvelle_reservation)
+            # Création de la réservation
+            reservation = Reservation(reservation_id, client_id, vehicule_id, date_debut, date_fin)
 
-            # récupération de la réservation complète
-            reservation_complete = self.db.charger_reservation(reservation_id)
+            # NOUVEAU: Calcul automatique du prix selon la durée
+            prix_calcule = reservation.calculer_prix(vehicule)
+            print(f"Prix calculé pour {reservation.calculer_duree_jours()} jours: {prix_calcule}€")
 
-            # AJOUT : Ajouter la réservation au parc en mémoire
-            if self.parc_controller and reservation_complete:
-                self.parc_controller.parc.reservations.append(reservation_complete)
-                print(f"Réservation ajoutée au parc. Total réservations: {len(self.parc_controller.parc.reservations)}")
+            # Sauvegarde en base de données
+            if hasattr(self, 'db') and self.db:
+                self.db.sauvegarder_reservation(reservation)
 
-            # NOUVEAU : Génération automatique de la facture PDF
-            facture_pdf_path = None
-            if reservation_complete:
-                try:
-                    facture_pdf_path = self._generer_facture_pdf(reservation_complete)
-                    print(f"✓ Facture PDF générée: {facture_pdf_path}")
-                except Exception as e:
-                    print(f"⚠ Erreur lors de la génération de la facture PDF: {e}")
+            # Ajout au parc
+            self.parc_controller.parc.reservations.append(reservation)
+
+            # Génération de la facture PDF
+            try:
+                facture_pdf = self._generer_facture_pdf(reservation)
+            except Exception as e:
+                print(f"Erreur génération PDF: {e}")
+                facture_pdf = None
 
             return {
-                'reservation': reservation_complete,
-                'facture_pdf': facture_pdf_path
+                'reservation': reservation,
+                'facture_pdf': facture_pdf
             }
 
         except Exception as e:
-            print(f"erreur lors de la création de la réservation: {e}")
-            return {'reservation': None, 'facture_pdf': None}
+            print(f"Erreur création réservation: {e}")
+            raise e
+
+    def _generer_id_reservation(self):
+        """Génère un ID unique pour la réservation"""
+        try:
+            # Récupérer l'ID max existant
+            existing_ids = []
+            if hasattr(self.parc_controller, 'parc') and self.parc_controller.parc.reservations:
+                existing_ids = [r.id for r in self.parc_controller.parc.reservations if hasattr(r, 'id')]
+
+            return max(existing_ids, default=0) + 1
+        except:
+            # Fallback: utiliser timestamp
+            from datetime import datetime
+            return int(datetime.now().timestamp()) % 10000
+
+    def obtenir_devis(self, vehicule_id, date_debut, date_fin):
+        """
+        Calcule un devis sans créer la réservation
+
+        Args:
+            vehicule_id: ID du véhicule
+            date_debut: Date de début
+            date_fin: Date de fin
+
+        Returns:
+            dict: Détails du devis ou None si erreur
+        """
+        try:
+            # CORRECTION: Accès correct au parc selon votre structure
+            vehicule = None
+
+            # Essayer différentes façons d'accéder au parc selon votre structure
+            if hasattr(self, 'parc_controller') and self.parc_controller:
+                # Si vous avez parc_controller
+                vehicule = self.parc_controller.parc._trouver_vehicule_par_id(vehicule_id)
+            elif hasattr(self, 'parc') and self.parc:
+                # Si vous avez directement parc
+                vehicule = self.parc._trouver_vehicule_par_id(vehicule_id)
+            else:
+                print("DEBUG: Aucun accès au parc trouvé dans ReservationController")
+                return None
+
+            if not vehicule:
+                print(f"DEBUG: Véhicule {vehicule_id} non trouvé")
+                return None
+
+            # Créer une réservation temporaire pour le calcul
+            from model.reservation import Reservation
+            temp_reservation = Reservation(0, 0, vehicule_id, date_debut, date_fin)
+
+            # Obtenir les détails du prix
+            details = temp_reservation.obtenir_details_prix(vehicule)
+
+            print(f"DEBUG: Devis calculé pour véhicule {vehicule_id}: {details}")
+            return details
+
+        except Exception as e:
+            print(f"Erreur calcul devis: {e}")
+            import traceback
+            traceback.print_exc()
+            return None
 
     def _generer_facture_pdf(self, reservation):
         """
-        Génère une facture PDF pour une réservation.
-
-        args:
-            reservation: objet réservation
-
-        returns:
-            str: chemin du fichier PDF généré
+        Génère une facture PDF dans le dossier 'factures' - VERSION SIMPLE
         """
         try:
-            # Import des modules nécessaires
+            import os
             from datetime import datetime
             from utils.pdf_generator import PDFGenerator
             from model.facture import Facture
+
+            # SIMPLE: Créer juste un dossier "factures"
+            dossier_factures = "factures"
+            if not os.path.exists(dossier_factures):
+                os.makedirs(dossier_factures)
 
             # Récupération des données nécessaires
             client = self.client_controller.charger_client(reservation.client_id) if self.client_controller else None
@@ -138,17 +187,61 @@ class ReservationController:
             if not client or not vehicule:
                 raise Exception("Impossible de récupérer les données client ou véhicule")
 
+            # Calcul du prix HT
+            prix_ht = 0.0
+            if hasattr(reservation, 'prix_total') and reservation.prix_total:
+                prix_ht = reservation.prix_total / 1.2
+            elif hasattr(reservation, 'prix') and reservation.prix:
+                prix_ht = reservation.prix / 1.2
+            else:
+                if hasattr(reservation, 'calculer_prix'):
+                    prix_ttc = reservation.calculer_prix(vehicule)
+                    prix_ht = prix_ttc / 1.2
+                else:
+                    prix_ht = 100.0
+
             # Création de l'objet Facture
             facture = Facture(
                 id=f"F{reservation.id}",
                 reservation_id=reservation.id,
                 date_emission=datetime.now(),
-                montant_ht=reservation.prix if hasattr(reservation, 'prix') else 100.0,
+                montant_ht=round(prix_ht, 2),
+                taux_tva=0.2
+            )
+
+            facture.montant_ttc = round(facture.montant_ht * (1 + facture.taux_tva), 2)
+
+            # SIMPLE: Nom de fichier basique dans le dossier factures
+            nom_fichier = f"facture_{reservation.id}.pdf"
+            chemin_complet = os.path.join(dossier_factures, nom_fichier)
+
+            # Génération du PDF
+            chemin_pdf = PDFGenerator.generer_facture(
+                facture, client, vehicule, reservation,
+                chemin_sortie=chemin_complet
+            )
+
+            print(f"✅ Facture sauvegardée: {chemin_pdf}")
+            return chemin_pdf
+
+        except Exception as e:
+            print(f"Erreur génération facture: {e}")
+            raise e
+
+
+            # Création de l'objet Facture avec le bon prix
+            facture = Facture(
+                id=f"F{reservation.id}",
+                reservation_id=reservation.id,
+                date_emission=datetime.now(),
+                montant_ht=round(prix_ht, 2),  # CORRECTION: Prix HT correct
                 taux_tva=0.2
             )
 
             # Calcul du montant TTC
-            facture.montant_ttc = facture.montant_ht * (1 + facture.taux_tva)
+            facture.montant_ttc = round(facture.montant_ht * (1 + facture.taux_tva), 2)
+
+            print(f"DEBUG Facture: Montant HT: {facture.montant_ht}€, TTC: {facture.montant_ttc}€")
 
             # Génération du PDF
             chemin_pdf = PDFGenerator.generer_facture(facture, client, vehicule, reservation)

@@ -76,39 +76,72 @@ class Reservation:
 
     def calculer_prix(self, vehicule):
         """
-        prix selon véhicule et durée.
+        FONCTION MODIFIÉE - Calcule le prix en fonction de la DURÉE et du véhicule
+
+        CHANGEMENTS:
+        - Ajout du calcul de durée en jours
+        - Multiplication tarif × nombre de jours
+        - Application de réductions selon la durée
+        - Mise à jour automatique de self.prix_total
 
         Args:
-            vehicule (Vehicule): Objet véhicule réservé
+            vehicule: Instance du véhicule réservé
 
         Returns:
             float: Prix total calculé
         """
-        # calcul du nombre de jours de location
-        # +1 car on compte le jour de début et de fin (pas de cadeau), .days coupe les heures, minutes... pour avoir juste des jours
-        duree_en_jours = (self.date_fin - self.date_debut).days + 1
+        # NOUVEAU: Calcul de la durée réelle
+        nb_jours = self.calculer_duree_jours()
 
-        # puis, on utilise les données de tarif propres aux véhicules (selon volume, puissance...)
+        # NOUVEAU: Récupération du tarif journalier du véhicule
         tarif_journalier = vehicule.calculer_tarif_journalier()
 
-        # quelques reductions pour des loc longue durée
-        if duree_en_jours > 30:
-            # 20% de réduction pour plus d'un mois
-            reduction = 0.20
-        elif duree_en_jours > 7:
-            # 10% de réduction pour plus d'une semaine
-            reduction = 0.10
+        # NOUVEAU: Calcul du prix de base (tarif × durée)
+        prix_base = tarif_journalier * nb_jours
+
+        # NOUVEAU: Application des réductions pour longue durée
+        if nb_jours >= 30:  # Plus d'un mois
+            prix_final = prix_base * 0.8  # 20% de réduction
+        elif nb_jours >= 7:  # Plus d'une semaine
+            prix_final = prix_base * 0.9  # 10% de réduction
         else:
-            # pas de réduction pour moins d'une semaine
-            reduction = 0
+            prix_final = prix_base  # Pas de réduction
 
-        # calcul final (avec reduc)
-        prix = tarif_journalier * duree_en_jours * (1 - reduction)
+        # NOUVEAU: Mise à jour automatique du prix total
+        self.prix_total = round(prix_final, 2)
 
-        # on le change dans la classe
-        self.prix_total = prix
+        return self.prix_total
 
-        return prix
+    def obtenir_details_prix(self, vehicule):
+        """
+        Retourne le détail du calcul pour affichage
+
+        Returns:
+            dict: Tous les détails du calcul de prix
+        """
+        nb_jours = self.calculer_duree_jours()
+        tarif_journalier = vehicule.calculer_tarif_journalier()
+        prix_base = tarif_journalier * nb_jours
+
+        # Calcul de la réduction
+        if nb_jours >= 30:
+            reduction_pourcent = 20
+            prix_final = prix_base * 0.8
+        elif nb_jours >= 7:
+            reduction_pourcent = 10
+            prix_final = prix_base * 0.9
+        else:
+            reduction_pourcent = 0
+            prix_final = prix_base
+
+        return {
+            'nb_jours': nb_jours,
+            'tarif_journalier': round(tarif_journalier, 2),
+            'prix_base': round(prix_base, 2),
+            'reduction_pourcent': reduction_pourcent,
+            'prix_final': round(prix_final, 2),
+            'economie': round(prix_base - prix_final, 2)
+        }
 
     def annuler(self):
         """
@@ -243,6 +276,15 @@ class Reservation:
                 f"Prix: {self.prix_total or 'Non calculé'} €, "
                 f"Statut: {self.statut}")
 
+    def calculer_duree_jours(self):
+        """
+        Calcule la durée en jours entre date_debut et date_fin
+
+        Returns:
+            int: Nombre de jours de la réservation (minimum 1)
+        """
+        duree = (self.date_fin - self.date_debut).days
+        return max(1, duree)  # Au minimum 1 jour même si dates identiques
 
 # implémentation du pattern Observer pour les notifs
 class NotificationEmail:
