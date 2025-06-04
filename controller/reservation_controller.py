@@ -167,18 +167,19 @@ class ReservationController:
 
     def _generer_facture_pdf(self, reservation):
         """
-        Génère une facture PDF dans le dossier 'factures' - VERSION SIMPLE
+        Génère une facture PDF pour une réservation.
+
+        args:
+            reservation: objet réservation
+
+        returns:
+            str: chemin du fichier PDF généré
         """
         try:
-            import os
+            # Import des modules nécessaires
             from datetime import datetime
             from utils.pdf_generator import PDFGenerator
             from model.facture import Facture
-
-            # SIMPLE: Créer juste un dossier "factures"
-            dossier_factures = "factures"
-            if not os.path.exists(dossier_factures):
-                os.makedirs(dossier_factures)
 
             # Récupération des données nécessaires
             client = self.client_controller.charger_client(reservation.client_id) if self.client_controller else None
@@ -187,61 +188,17 @@ class ReservationController:
             if not client or not vehicule:
                 raise Exception("Impossible de récupérer les données client ou véhicule")
 
-            # Calcul du prix HT
-            prix_ht = 0.0
-            if hasattr(reservation, 'prix_total') and reservation.prix_total:
-                prix_ht = reservation.prix_total / 1.2
-            elif hasattr(reservation, 'prix') and reservation.prix:
-                prix_ht = reservation.prix / 1.2
-            else:
-                if hasattr(reservation, 'calculer_prix'):
-                    prix_ttc = reservation.calculer_prix(vehicule)
-                    prix_ht = prix_ttc / 1.2
-                else:
-                    prix_ht = 100.0
-
             # Création de l'objet Facture
             facture = Facture(
                 id=f"F{reservation.id}",
                 reservation_id=reservation.id,
                 date_emission=datetime.now(),
-                montant_ht=round(prix_ht, 2),
-                taux_tva=0.2
-            )
-
-            facture.montant_ttc = round(facture.montant_ht * (1 + facture.taux_tva), 2)
-
-            # SIMPLE: Nom de fichier basique dans le dossier factures
-            nom_fichier = f"facture_{reservation.id}.pdf"
-            chemin_complet = os.path.join(dossier_factures, nom_fichier)
-
-            # Génération du PDF
-            chemin_pdf = PDFGenerator.generer_facture(
-                facture, client, vehicule, reservation,
-                chemin_sortie=chemin_complet
-            )
-
-            print(f"✅ Facture sauvegardée: {chemin_pdf}")
-            return chemin_pdf
-
-        except Exception as e:
-            print(f"Erreur génération facture: {e}")
-            raise e
-
-
-            # Création de l'objet Facture avec le bon prix
-            facture = Facture(
-                id=f"F{reservation.id}",
-                reservation_id=reservation.id,
-                date_emission=datetime.now(),
-                montant_ht=round(prix_ht, 2),  # CORRECTION: Prix HT correct
+                montant_ht=reservation.prix if hasattr(reservation, 'prix') else 100.0,
                 taux_tva=0.2
             )
 
             # Calcul du montant TTC
-            facture.montant_ttc = round(facture.montant_ht * (1 + facture.taux_tva), 2)
-
-            print(f"DEBUG Facture: Montant HT: {facture.montant_ht}€, TTC: {facture.montant_ttc}€")
+            facture.montant_ttc = facture.montant_ht * (1 + facture.taux_tva)
 
             # Génération du PDF
             chemin_pdf = PDFGenerator.generer_facture(facture, client, vehicule, reservation)

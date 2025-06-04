@@ -184,34 +184,39 @@ class PDFGenerator:
                          "siret: 123 456 789 00012 | tva intracommunautaire: fr12345678901")
 
     @staticmethod
-    @staticmethod
-    def generer_facture(facture, client, vehicule, reservation, chemin_sortie=None):
-        """Génère une facture PDF"""
-        try:
-            from reportlab.pdfgen import canvas
-            from reportlab.lib.pagesizes import A4
-            from datetime import datetime
+    def generer_facture(facture, client, vehicule, reservation):
+        """
+        génère une facture pdf complète.
 
-            # SIMPLE: Utiliser le chemin fourni ou nom par défaut
-            if chemin_sortie:
-                nom_fichier = chemin_sortie
-            else:
-                nom_fichier = f"facture_{facture.id}.pdf"
+        args:
+            facture: objet facture
+            client: objet client
+            vehicule: objet véhicule
+            reservation: objet réservation
 
-            # Création du PDF (votre code existant)
-            c = canvas.Canvas(nom_fichier, pagesize=A4)
-            width, height = A4
+        returns:
+            str: chemin du fichier pdf généré
+        """
+        # nom du fichier de sortie
+        nom_fichier = f"facture_{facture.id}_{client.id}.pdf"
 
-            # Votre code PDF existant ici...
-            # (En-tête, client, véhicule, prix, etc.)
+        # création du canvas pdf
+        c = canvas.Canvas(nom_fichier, pagesize=A4)
+        width, height = A4
 
-            c.save()
-            return nom_fichier
+        print(f"génération de la facture pdf: {nom_fichier}")
 
-        except Exception as e:
-            print(f"Erreur PDF: {e}")
-            raise e
+        # génération des sections
+        PDFGenerator._generer_en_tete(c, width, height, facture, client)
+        PDFGenerator._generer_details_location(c, width, height, vehicule, reservation)
+        PDFGenerator._generer_tableau_montants(c, width, height, facture)
+        PDFGenerator._generer_pied_page(c, width, height)
 
+        # sauvegarde du pdf
+        c.save()
+
+        print(f"✓ pdf généré avec succès: {nom_fichier}")
+        return nom_fichier
 
 # Code de test
 if __name__ == "__main__":
