@@ -373,8 +373,6 @@ class Parc:
     def _analyser_demandes_refusees(self, historique_reservations):
         """
         Analyse les demandes qui n'ont pas pu être satisfaites.
-        Note: Ceci est une version simplifiée. Dans une implémentation complète,
-        on utiliserait un historique des demandes refusées.
 
         Args:
             historique_reservations (list): Historique des réservations
