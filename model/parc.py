@@ -588,7 +588,7 @@ if __name__ == "__main__":
             statut="terminée"
         ))
 
-# Test de l’optimisation
+# ## Test de l’optimisation
 # resultats_optimisation = parc.optimiser_parc(historique, budget_annuel=40000)
 #
 # print("\nOptimisation du parc:")
